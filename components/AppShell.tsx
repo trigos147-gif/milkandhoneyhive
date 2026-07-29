@@ -3,6 +3,8 @@ import { LayoutGrid, Users, Layers, CalendarDays, Search } from "lucide-react";
 import SignOutButton from "./SignOutButton";
 import type { Client } from "@/lib/types";
 
+/* eslint-disable @next/next/no-img-element */
+
 const NAV = [
   { href: "/dashboard", label: "Calendar", icon: LayoutGrid },
   { href: "/clients", label: "Clients", icon: Users },
@@ -33,8 +35,12 @@ export default function AppShell({
     <div className="flex min-h-screen w-full">
       <aside className="flex w-60 shrink-0 flex-col justify-between bg-[#161616] px-4 py-5 text-white/80">
         <div>
-          <div className="mb-6 px-1 font-display text-lg font-medium text-white">
-            {workspaceName}
+          <div className="mb-6 rounded-lg bg-white px-3 py-2.5">
+            <img
+              src="/logo.png"
+              alt={workspaceName}
+              className="h-9 w-auto"
+            />
           </div>
           <nav className="space-y-1">
             {NAV.map(({ href, label, icon: Icon }) => {

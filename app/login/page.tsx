@@ -59,10 +59,13 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <p className="font-mono-data text-xs uppercase tracking-wide text-[var(--ink-soft)]">
-          Client Flow
-        </p>
-        <h1 className="mb-6 font-display text-2xl font-medium">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="The Milk and Honey Hive"
+          className="mx-auto mb-6 h-20 w-auto"
+        />
+        <h1 className="mb-6 text-center font-display text-2xl font-medium">
           {mode === "signup" ? "Create your workspace" : "Welcome back"}
         </h1>
 
