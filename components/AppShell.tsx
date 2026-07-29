@@ -38,12 +38,14 @@ export default async function AppShell({
 
   return (
     <div className="flex min-h-screen w-full">
-      <aside className="flex w-60 shrink-0 flex-col justify-between bg-[#161616] px-4 py-5 text-white/80">
+      <aside className="flex w-60 shrink-0 flex-col justify-between bg-[#161616] text-white/80">
         <div>
-          <div className="mb-6 px-1 font-display text-lg font-medium text-white">
-            {workspaceName}
+          <div className="flex h-[76px] items-center border-b border-white/10 px-5">
+            <span className="truncate font-display text-base font-medium text-white">
+              {workspaceName}
+            </span>
           </div>
-          <nav className="space-y-1">
+          <nav className="space-y-1 px-4 pt-5">
             {NAV.map(({ href, label, icon: Icon }) => {
               const active =
                 href === "/" ? activePath === "/" : activePath.startsWith(href);
@@ -64,7 +66,7 @@ export default async function AppShell({
             })}
           </nav>
 
-          <div className="mt-8">
+          <div className="mt-8 px-4">
             <p className="px-3 font-mono-data text-[10px] uppercase tracking-wide text-white/35">
               Clients
             </p>
@@ -90,13 +92,13 @@ export default async function AppShell({
           </div>
         </div>
 
-        <div className="px-3">
+        <div className="px-7 py-5">
           <SignOutButton />
         </div>
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-end gap-4 border-b border-[var(--ink)]/8 bg-[var(--paper)] px-8 py-3">
+        <div className="flex h-[76px] items-center justify-end gap-4 border-b border-[var(--ink)]/8 bg-[var(--paper)] px-8">
           <AccountButton
             email={user?.email ?? ""}
             fullName={user?.fullName ?? ""}
