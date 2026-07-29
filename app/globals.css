@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #1a1a1a;
+  --ink-soft: #6b6b6b;
+  --paper: #f4f2ee;
+  --paper-raised: #ffffff;
+  --teal: #4c7a7c;
+  --gold: #c08a2e;
+  --sage: #7c9a6e;
+  --plum: #8b5e7a;
+  --rust: #b85c42;
+}
+
+* {
+  border-color: rgb(0 0 0 / 0.08);
+}
+
+html,
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.font-display {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.font-mono-data {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.04em;
+}
