@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutGrid, Users, Layers, CalendarDays, Search } from "lucide-react";
+import { LayoutGrid, Users, Layers, CalendarDays } from "lucide-react";
 import SignOutButton from "./SignOutButton";
 import AccountButton from "./AccountButton";
 import { getCurrentUser } from "@/lib/queries";
@@ -94,11 +94,7 @@ export default async function AppShell({
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <div className="flex items-center justify-between gap-4 border-b border-[var(--ink)]/8 bg-[var(--paper)] px-8 py-3">
-          <div className="flex flex-1 items-center gap-2 rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] px-3 py-2 text-sm text-[var(--ink-soft)]">
-            <Search size={14} />
-            Search clients…
-          </div>
+        <div className="flex items-center justify-end gap-4 border-b border-[var(--ink)]/8 bg-[var(--paper)] px-8 py-3">
           <AccountButton
             email={user?.email ?? ""}
             fullName={user?.fullName ?? ""}
