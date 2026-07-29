@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Client Flow",
+  title: "The Hive",
   description: "Cross-client content and workflow dashboard",
 };
 
