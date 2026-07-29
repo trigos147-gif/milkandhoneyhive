@@ -119,6 +119,16 @@ export async function getClientActivity(clientId: string): Promise<ClientActivit
   return data ?? [];
 }
 
+export async function getRecentActivity(limit = 10): Promise<ClientActivity[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("client_activity")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
+
 export async function getCurrentUser() {
   const supabase = await createClient();
   const {

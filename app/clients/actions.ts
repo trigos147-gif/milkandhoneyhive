@@ -25,4 +25,5 @@ export async function addClient(formData: FormData) {
 
   revalidatePath("/clients");
   revalidatePath("/dashboard");
+  revalidatePath("/");
 }

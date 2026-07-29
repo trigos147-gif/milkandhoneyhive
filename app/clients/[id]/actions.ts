@@ -18,6 +18,7 @@ export async function createContentItem(clientId: string, phase: ContentPhase) {
   });
 
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/");
 }
 
 export async function updateContentPhase(
@@ -32,6 +33,7 @@ export async function updateContentPhase(
     .eq("id", itemId);
 
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/");
 }
 
 export async function updateContentTitle(
@@ -46,6 +48,7 @@ export async function updateContentTitle(
     .eq("id", itemId);
 
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/");
 }
 
 export async function addActivityNote(clientId: string, body: string) {
@@ -66,4 +69,5 @@ export async function addActivityNote(clientId: string, body: string) {
   });
 
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/");
 }

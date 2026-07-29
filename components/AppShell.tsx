@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutGrid, Users, Layers, CalendarDays } from "lucide-react";
+import { Hexagon, LayoutGrid, Users, Layers, CalendarDays } from "lucide-react";
 import SignOutButton from "./SignOutButton";
 import AccountButton from "./AccountButton";
 import { getCurrentUser } from "@/lib/queries";
@@ -8,6 +8,7 @@ import type { Client } from "@/lib/types";
 /* eslint-disable @next/next/no-img-element */
 
 const NAV = [
+  { href: "/", label: "The Hive", icon: Hexagon },
   { href: "/dashboard", label: "Calendar", icon: LayoutGrid },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/batching", label: "Batching", icon: Layers },
@@ -44,7 +45,8 @@ export default async function AppShell({
           </div>
           <nav className="space-y-1">
             {NAV.map(({ href, label, icon: Icon }) => {
-              const active = activePath.startsWith(href);
+              const active =
+                href === "/" ? activePath === "/" : activePath.startsWith(href);
               return (
                 <Link
                   key={href}

@@ -35,7 +35,7 @@ export default function LoginPage() {
         return;
       }
       if (data.session) {
-        router.push("/dashboard");
+        router.push("/");
         router.refresh();
       } else {
         setMessage("Check your email to confirm your account, then sign in.");
@@ -51,7 +51,7 @@ export default function LoginPage() {
         setError(error.message);
         return;
       }
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     }
   }
