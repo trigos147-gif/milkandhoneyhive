@@ -99,14 +99,14 @@ export default async function AppShell({
             <Search size={14} />
             Search clients…
           </div>
+          <AccountButton
+            email={user?.email ?? ""}
+            fullName={user?.fullName ?? ""}
+          />
           <img
             src="/logo.png"
             alt={workspaceName}
             className="h-16 w-auto shrink-0"
-          />
-          <AccountButton
-            email={user?.email ?? ""}
-            fullName={user?.fullName ?? ""}
           />
         </div>
         <div className="flex-1 bg-[var(--paper)] px-8 py-8">{children}</div>
