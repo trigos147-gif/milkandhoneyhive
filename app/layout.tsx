@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "The Hive",
   description: "Cross-client content and workflow dashboard",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
