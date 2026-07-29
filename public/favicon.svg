@@ -1,39 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Hive background -->
+  <!-- Background -->
   <rect width="100" height="100" fill="#f4f2ee" rx="8"/>
   
-  <!-- Honeycomb hexagons in background -->
-  <g fill="none" stroke="#c08a2e" stroke-width="1.5" opacity="0.3">
-    <polygon points="30,20 40,15 50,20 50,30 40,35 30,30"/>
-    <polygon points="55,20 65,15 75,20 75,30 65,35 55,30"/>
-    <polygon points="42,35 52,30 62,35 62,45 52,50 42,45"/>
+  <!-- Large honeycomb hexagons -->
+  <g fill="none" stroke="#c08a2e" stroke-width="2.5">
+    <!-- Center hexagon -->
+    <polygon points="50,20 65,28 65,44 50,52 35,44 35,28"/>
+    
+    <!-- Top left -->
+    <polygon points="28,20 43,28 43,44 28,52 13,44 13,28"/>
+    
+    <!-- Top right -->
+    <polygon points="72,20 87,28 87,44 72,52 57,44 57,28"/>
+    
+    <!-- Middle left -->
+    <polygon points="20,50 35,58 35,74 20,82 5,74 5,58"/>
+    
+    <!-- Middle right -->
+    <polygon points="80,50 95,58 95,74 80,82 65,74 65,58"/>
+    
+    <!-- Bottom center -->
+    <polygon points="50,72 65,80 65,96 50,104 35,96 35,80"/>
   </g>
-  
-  <!-- Bee body -->
-  <ellipse cx="50" cy="50" rx="16" ry="22" fill="#FFD700"/>
-  
-  <!-- Bee stripes -->
-  <rect x="42" y="40" width="16" height="4" fill="#1a1a1a"/>
-  <rect x="42" y="48" width="16" height="4" fill="#1a1a1a"/>
-  <rect x="42" y="56" width="16" height="4" fill="#1a1a1a"/>
-  
-  <!-- Bee head -->
-  <circle cx="50" cy="32" r="8" fill="#FFD700"/>
-  
-  <!-- Eyes -->
-  <circle cx="47" cy="30" r="1.5" fill="#1a1a1a"/>
-  <circle cx="53" cy="30" r="1.5" fill="#1a1a1a"/>
-  
-  <!-- Antenna -->
-  <path d="M 48 26 Q 46 22 45 18" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <path d="M 52 26 Q 54 22 55 18" stroke="#1a1a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  
-  <!-- Wings -->
-  <ellipse cx="38" cy="48" rx="6" ry="12" fill="#ffffff" opacity="0.6" transform="rotate(-25 38 48)"/>
-  <ellipse cx="62" cy="48" rx="6" ry="12" fill="#ffffff" opacity="0.6" transform="rotate(25 62 48)"/>
-  
-  <!-- Legs -->
-  <line x1="45" y1="62" x2="42" y2="72" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="50" y1="64" x2="50" y2="75" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="55" y1="62" x2="58" y2="72" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
 </svg>
