@@ -1,20 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- No background - transparent -->
-  
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- No background - transparent -->
-  
-  <!-- Classic beehive (skep) shape, golden -->
-  <g fill="none" stroke="#c08a2e" stroke-width="4" stroke-linecap="round">
-    <!-- Dome outline -->
-    <path d="M 50 12 C 30 12 18 32 18 55 C 18 70 20 82 20 88 L 80 88 C 80 82 82 70 82 55 C 82 32 70 12 50 12 Z"/>
+  <!-- Heavy filled honeycomb hexagon cluster -->
+  <g stroke="#1a1a1a" stroke-width="4" stroke-linejoin="round">
+    <!-- Center hexagon -->
+    <polygon points="50,32 62,39 62,53 50,60 38,53 38,39" fill="#F5C518"/>
     
-    <!-- Horizontal bands (skep rings) -->
-    <path d="M 19 68 L 81 68"/>
-    <path d="M 18.5 78 L 81.5 78"/>
+    <!-- Top hexagon -->
+    <polygon points="50,10 62,17 62,31 50,38 38,31 38,17" fill="#F5C518"/>
     
-    <!-- Entrance hole -->
-    <path d="M 44 88 Q 44 80 50 80 Q 56 80 56 88" fill="#c08a2e" stroke="none"/>
+    <!-- Top-left hexagon -->
+    <polygon points="29,21 41,28 41,42 29,49 17,42 17,28" fill="#F5C518"/>
+    
+    <!-- Top-right hexagon -->
+    <polygon points="71,21 83,28 83,42 71,49 59,42 59,28" fill="#F5C518"/>
+    
+    <!-- Bottom-left hexagon -->
+    <polygon points="29,43 41,50 41,64 29,71 17,64 17,50" fill="#F5C518"/>
+    
+    <!-- Bottom-right hexagon -->
+    <polygon points="71,43 83,50 83,64 71,71 59,64 59,50" fill="#F5C518"/>
+    
+    <!-- Bottom hexagon -->
+    <polygon points="50,54 62,61 62,75 50,82 38,75 38,61" fill="#F5C518"/>
   </g>
-</svg>
 </svg>
