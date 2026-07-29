@@ -35,12 +35,8 @@ export default function AppShell({
     <div className="flex min-h-screen w-full">
       <aside className="flex w-60 shrink-0 flex-col justify-between bg-[#161616] px-4 py-5 text-white/80">
         <div>
-          <div className="mb-6 rounded-lg bg-white px-3 py-2.5">
-            <img
-              src="/logo.png"
-              alt={workspaceName}
-              className="h-9 w-auto"
-            />
+          <div className="mb-6 px-1 font-display text-lg font-medium text-white">
+            {workspaceName}
           </div>
           <nav className="space-y-1">
             {NAV.map(({ href, label, icon: Icon }) => {
@@ -94,11 +90,16 @@ export default function AppShell({
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <div className="border-b border-[var(--ink)]/8 bg-[var(--paper)] px-8 py-4">
-          <div className="flex items-center gap-2 rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] px-3 py-2 text-sm text-[var(--ink-soft)]">
+        <div className="flex items-center justify-between gap-4 border-b border-[var(--ink)]/8 bg-[var(--paper)] px-8 py-3">
+          <div className="flex flex-1 items-center gap-2 rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] px-3 py-2 text-sm text-[var(--ink-soft)]">
             <Search size={14} />
             Search clients…
           </div>
+          <img
+            src="/logo.png"
+            alt={workspaceName}
+            className="h-16 w-auto shrink-0"
+          />
         </div>
         <div className="flex-1 bg-[var(--paper)] px-8 py-8">{children}</div>
       </div>
