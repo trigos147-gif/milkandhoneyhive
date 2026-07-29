@@ -2,7 +2,7 @@
   <!-- No background - transparent -->
   
   <!-- Large honeycomb hexagons -->
-  <g fill="none" stroke="#1a1a1a" stroke-width="3">
+  <g fill="none" stroke="#c08a2e" stroke-width="3">
     <!-- Center hexagon -->
     <polygon points="50,20 65,28 65,44 50,52 35,44 35,28"/>
     
