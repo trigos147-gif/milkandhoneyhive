@@ -48,8 +48,9 @@ export default async function AppShell({
           </div>
           <nav className="space-y-1 px-4 pt-5">
             {NAV.map(({ href, label, icon: Icon }) => {
-              const active =
-                href === "/" ? activePath === "/" : activePath.startsWith(href);
+              const active = href === "/" || href === "/clients"
+                ? activePath === href
+                : activePath.startsWith(href);
               return (
                 <Link
                   key={href}
@@ -75,19 +76,26 @@ export default async function AppShell({
               {clients.length === 0 ? (
                 <p className="px-3 text-xs text-white/35">No clients yet</p>
               ) : (
-                clients.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/clients/${c.id}`}
-                    className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-white/70 hover:bg-white/5 hover:text-white/95"
-                  >
-                    <span
-                      className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: STATUS_DOT[c.status] ?? c.color }}
-                    />
-                    <span className="truncate">{c.name}</span>
-                  </Link>
-                ))
+                clients.map((c) => {
+                  const clientActive = activePath === `/clients/${c.id}`;
+                  return (
+                    <Link
+                      key={c.id}
+                      href={`/clients/${c.id}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                        clientActive
+                          ? "bg-white/10 font-medium text-white"
+                          : "text-white/70 hover:bg-white/5 hover:text-white/95"
+                      }`}
+                    >
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: STATUS_DOT[c.status] ?? c.color }}
+                      />
+                      <span className="truncate">{c.name}</span>
+                    </Link>
+                  );
+                })
               )}
             </div>
           </div>
