@@ -67,6 +67,7 @@ export default function ContentDrawer({
   const [heroIndex, setHeroIndex] = useState(0);
 
   const [saving, setSaving] = useState(false);
+  const [filesChanged, setFilesChanged] = useState(false);
 
   const dirty =
     title !== item.title ||
@@ -76,7 +77,8 @@ export default function ContentDrawer({
     scheduledDate !== (item.scheduled_date ?? "") ||
     scheduledTime !== (item.scheduled_time ?? "") ||
     caption !== (item.caption ?? "") ||
-    hashtags !== (item.hashtags ?? "");
+    hashtags !== (item.hashtags ?? "") ||
+    filesChanged;
 
   function refresh() {
     router.refresh();
@@ -96,6 +98,7 @@ export default function ContentDrawer({
       hashtags: hashtags || null,
     });
     setSaving(false);
+    setFilesChanged(false);
     refresh();
     onClose();
   }
@@ -150,6 +153,7 @@ export default function ContentDrawer({
     );
     setFileUrls(urls);
     setUploading(false);
+    setFilesChanged(true);
     refresh();
   }
 
@@ -260,6 +264,7 @@ export default function ContentDrawer({
                       await removeContentFile(clientId, hero.id, hero.file_path);
                       setFiles((prev) => prev.filter((x) => x.id !== hero.id));
                       setHeroIndex(0);
+                      setFilesChanged(true);
                       refresh();
                     }}
                     className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
