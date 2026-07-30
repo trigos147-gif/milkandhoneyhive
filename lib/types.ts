@@ -2,6 +2,12 @@ export type ContentPhase = "idea" | "in_progress" | "pending" | "approved" | "cl
 
 export type ClientStatus = "lead" | "onboarding" | "active" | "paused" | "archived";
 
+export type BillingType = "retainer" | "per_deliverable" | "one_time" | "as_needed";
+
+export type PaymentStatus = "pending" | "invoiced" | "paid" | "overdue";
+
+export type DeliverableFrequency = "weekly" | "monthly" | "one_time";
+
 export interface Workspace {
   id: string;
   name: string;
@@ -109,6 +115,73 @@ export interface BusinessEvent {
   notes: string | null;
   created_at: string;
 }
+
+export interface ClientContract {
+  id: string;
+  workspace_id: string;
+  client_id: string;
+  billing_type: BillingType;
+  rate_amount: number | null;
+  currency: string;
+  contract_start: string | null;
+  contract_end: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContractDeliverable {
+  id: string;
+  workspace_id: string;
+  contract_id: string;
+  deliverable_type: string;
+  quantity: number;
+  frequency: DeliverableFrequency;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface Payment {
+  id: string;
+  workspace_id: string;
+  client_id: string;
+  contract_id: string | null;
+  amount: number;
+  currency: string;
+  period_label: string | null;
+  status: PaymentStatus;
+  due_date: string | null;
+  paid_date: string | null;
+  payment_method: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanRun {
+  id: string;
+  workspace_id: string;
+  scope: string;
+  range_start: string;
+  range_end: string;
+  summary: string | null;
+  created_at: string;
+}
+
+export const BILLING_TYPE_LABELS: Record<BillingType, string> = {
+  retainer: "Retainer",
+  per_deliverable: "Per deliverable",
+  one_time: "One-time",
+  as_needed: "As needed",
+};
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: "Pending",
+  invoiced: "Invoiced",
+  paid: "Paid",
+  overdue: "Overdue",
+};
 
 export const PHASE_LABELS: Record<ContentPhase, string> = {
   idea: "Idea",

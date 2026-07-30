@@ -1,4 +1,5 @@
 import AppShell from "@/components/AppShell";
+import PlannerPanel from "./PlannerPanel";
 import { getClients, getCurrentWorkspace, getPlanningNotes } from "@/lib/queries";
 
 export default async function PlanningPage() {
@@ -29,12 +30,16 @@ export default async function PlanningPage() {
         ready.
       </p>
 
+      <div className="mt-6">
+        <PlannerPanel />
+      </div>
+
       {clients.length === 0 ? (
-        <p className="mt-6 text-sm text-[var(--ink-soft)]">
+        <p className="text-sm text-[var(--ink-soft)]">
           Add a client first to start planning for them.
         </p>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {clients.map((client) => (
             <div
               key={client.id}

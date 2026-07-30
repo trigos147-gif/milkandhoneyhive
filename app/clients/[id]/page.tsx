@@ -2,14 +2,18 @@ import { notFound } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import Board from "./Board";
 import ActivityPanel from "./ActivityPanel";
+import ContractPanel from "./ContractPanel";
 import {
   getClient,
   getClientActivity,
+  getClientContracts,
   getClients,
   getContentItems,
   getContentPillars,
+  getContractDeliverables,
   getCurrentWorkspace,
 } from "@/lib/queries";
+import type { ContractDeliverable } from "@/lib/types";
 
 export default async function ClientDetailPage({
   params,
@@ -18,16 +22,26 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
 
-  const [workspace, clients, client, items, pillars, activity] = await Promise.all([
-    getCurrentWorkspace(),
-    getClients(),
-    getClient(id),
-    getContentItems(id),
-    getContentPillars(),
-    getClientActivity(id),
-  ]);
+  const [workspace, clients, client, items, pillars, activity, contracts] =
+    await Promise.all([
+      getCurrentWorkspace(),
+      getClients(),
+      getClient(id),
+      getContentItems(id),
+      getContentPillars(),
+      getClientActivity(id),
+      getClientContracts(id),
+    ]);
 
   if (!client) notFound();
+
+  const deliverables = await getContractDeliverables(contracts.map((c) => c.id));
+  const deliverablesByContract = new Map<string, ContractDeliverable[]>();
+  for (const d of deliverables) {
+    if (!deliverablesByContract.has(d.contract_id))
+      deliverablesByContract.set(d.contract_id, []);
+    deliverablesByContract.get(d.contract_id)!.push(d);
+  }
 
   return (
     <AppShell
@@ -45,7 +59,14 @@ export default async function ClientDetailPage({
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <Board clientId={id} items={items} pillars={pillars} />
-        <ActivityPanel clientId={id} activity={activity} />
+        <div className="space-y-6">
+          <ContractPanel
+            clientId={id}
+            contracts={contracts}
+            deliverablesByContract={deliverablesByContract}
+          />
+          <ActivityPanel clientId={id} activity={activity} />
+        </div>
       </div>
     </AppShell>
   );

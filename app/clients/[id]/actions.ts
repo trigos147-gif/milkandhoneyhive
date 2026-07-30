@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentWorkspace } from "@/lib/queries";
-import type { ContentPhase } from "@/lib/types";
+import type { BillingType, ContentPhase, DeliverableFrequency } from "@/lib/types";
 
 export async function createContentItem(clientId: string, phase: ContentPhase) {
   const workspace = await getCurrentWorkspace();
@@ -49,6 +49,103 @@ export async function updateContentTitle(
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/");
+}
+
+export async function createContract(
+  clientId: string,
+  data: {
+    billingType: BillingType;
+    rateAmount: number | null;
+    contractStart: string | null;
+    contractEnd: string | null;
+    notes: string | null;
+  }
+) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return;
+
+  const supabase = await createClient();
+  await supabase.from("client_contracts").insert({
+    workspace_id: workspace.id,
+    client_id: clientId,
+    billing_type: data.billingType,
+    rate_amount: data.rateAmount,
+    contract_start: data.contractStart,
+    contract_end: data.contractEnd,
+    notes: data.notes,
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function updateContractStatus(
+  clientId: string,
+  contractId: string,
+  status: string
+) {
+  const supabase = await createClient();
+  await supabase
+    .from("client_contracts")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", contractId);
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function addDeliverable(
+  clientId: string,
+  contractId: string,
+  data: {
+    deliverableType: string;
+    quantity: number;
+    frequency: DeliverableFrequency;
+  }
+) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return;
+
+  const supabase = await createClient();
+  await supabase.from("contract_deliverables").insert({
+    workspace_id: workspace.id,
+    contract_id: contractId,
+    deliverable_type: data.deliverableType,
+    quantity: data.quantity,
+    frequency: data.frequency,
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function deleteDeliverable(clientId: string, deliverableId: string) {
+  const supabase = await createClient();
+  await supabase.from("contract_deliverables").delete().eq("id", deliverableId);
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function addPayment(
+  clientId: string,
+  data: {
+    contractId: string | null;
+    amount: number;
+    periodLabel: string | null;
+    dueDate: string | null;
+  }
+) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return;
+
+  const supabase = await createClient();
+  await supabase.from("payments").insert({
+    workspace_id: workspace.id,
+    client_id: clientId,
+    contract_id: data.contractId,
+    amount: data.amount,
+    period_label: data.periodLabel,
+    due_date: data.dueDate,
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/payments");
 }
 
 export async function addActivityNote(clientId: string, body: string) {

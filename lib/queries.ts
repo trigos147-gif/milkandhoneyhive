@@ -4,8 +4,11 @@ import type {
   Cadence,
   Client,
   ClientActivity,
+  ClientContract,
   ContentItem,
   ContentPillar,
+  ContractDeliverable,
+  Payment,
   PlanningNote,
   Task,
   Workspace,
@@ -126,6 +129,41 @@ export async function getRecentActivity(limit = 10): Promise<ClientActivity[]> {
     .select("*")
     .order("created_at", { ascending: false })
     .limit(limit);
+  return data ?? [];
+}
+
+export async function getClientContracts(clientId?: string): Promise<ClientContract[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("client_contracts")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (clientId) query = query.eq("client_id", clientId);
+  const { data } = await query;
+  return data ?? [];
+}
+
+export async function getContractDeliverables(
+  contractIds?: string[]
+): Promise<ContractDeliverable[]> {
+  const supabase = await createClient();
+  let query = supabase.from("contract_deliverables").select("*");
+  if (contractIds) {
+    if (contractIds.length === 0) return [];
+    query = query.in("contract_id", contractIds);
+  }
+  const { data } = await query;
+  return data ?? [];
+}
+
+export async function getPayments(clientId?: string): Promise<Payment[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("payments")
+    .select("*")
+    .order("due_date", { ascending: true, nullsFirst: false });
+  if (clientId) query = query.eq("client_id", clientId);
+  const { data } = await query;
   return data ?? [];
 }
 
