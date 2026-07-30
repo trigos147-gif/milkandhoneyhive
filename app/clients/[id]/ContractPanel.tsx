@@ -344,14 +344,42 @@ export default function ContractPanel({
                   </button>
                 </div>
               </div>
-              {(contract.contract_start || contract.contract_end) && (
-                <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                  {contract.contract_start ?? "—"} to {contract.contract_end ?? "open-ended"}
-                </p>
-              )}
               {contract.notes && (
                 <p className="mt-1 text-xs text-[var(--ink-soft)]">{contract.notes}</p>
               )}
+
+              <div className="mt-3 grid grid-cols-2 gap-2 border-y border-[var(--ink)]/8 py-2.5 text-xs">
+                <div>
+                  <p className="font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
+                    Start date
+                  </p>
+                  <p className="mt-0.5">{contract.contract_start ?? "Not set"}</p>
+                </div>
+                <div>
+                  <p className="font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
+                    End date
+                  </p>
+                  <p className="mt-0.5">{contract.contract_end ?? "Open-ended"}</p>
+                </div>
+                <div>
+                  <p className="font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
+                    Deliverables
+                  </p>
+                  <p className="mt-0.5">{(deliverablesByContract.get(contract.id) ?? []).length}</p>
+                </div>
+                <div>
+                  <p className="font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
+                    Added
+                  </p>
+                  <p className="mt-0.5">
+                    {new Date(contract.created_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
 
               <ContractFile clientId={clientId} contract={contract} />
 
@@ -377,6 +405,9 @@ export default function ContractPanel({
                 ))}
               </div>
 
+              <p className="mt-3 font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
+                Add a deliverable
+              </p>
               <DeliverableForm clientId={clientId} contractId={contract.id} />
             </div>
           ))}
