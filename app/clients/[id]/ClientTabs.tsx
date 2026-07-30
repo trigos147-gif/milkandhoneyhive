@@ -44,7 +44,7 @@ export default function ClientTabs({
         ))}
       </div>
 
-      <div className="mt-5">{panels[active]}</div>
+      <div className={active === "calendar" ? "" : "mt-5"}>{panels[active]}</div>
     </div>
   );
 }
