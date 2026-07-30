@@ -62,20 +62,69 @@ export async function createContract(
   }
 ) {
   const workspace = await getCurrentWorkspace();
-  if (!workspace) return;
+  if (!workspace) return null;
 
   const supabase = await createClient();
-  await supabase.from("client_contracts").insert({
-    workspace_id: workspace.id,
-    client_id: clientId,
-    billing_type: data.billingType,
-    rate_amount: data.rateAmount,
-    contract_start: data.contractStart,
-    contract_end: data.contractEnd,
-    notes: data.notes,
-  });
+  const { data: row } = await supabase
+    .from("client_contracts")
+    .insert({
+      workspace_id: workspace.id,
+      client_id: clientId,
+      billing_type: data.billingType,
+      rate_amount: data.rateAmount,
+      contract_start: data.contractStart,
+      contract_end: data.contractEnd,
+      notes: data.notes,
+    })
+    .select()
+    .single();
 
   revalidatePath(`/clients/${clientId}`);
+  return row ?? null;
+}
+
+export async function attachContractFile(
+  clientId: string,
+  contractId: string,
+  filePath: string,
+  fileName: string
+) {
+  const supabase = await createClient();
+  await supabase
+    .from("client_contracts")
+    .update({ file_path: filePath, file_name: fileName, updated_at: new Date().toISOString() })
+    .eq("id", contractId);
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function removeContractFile(clientId: string, contractId: string) {
+  const supabase = await createClient();
+  const { data: contract } = await supabase
+    .from("client_contracts")
+    .select("file_path")
+    .eq("id", contractId)
+    .single();
+
+  if (contract?.file_path) {
+    await supabase.storage.from("contract-files").remove([contract.file_path]);
+  }
+
+  await supabase
+    .from("client_contracts")
+    .update({ file_path: null, file_name: null, updated_at: new Date().toISOString() })
+    .eq("id", contractId);
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function getContractFileUrl(filePath: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.storage
+    .from("contract-files")
+    .createSignedUrl(filePath, 60 * 5);
+
+  return data?.signedUrl ?? null;
 }
 
 export async function updateContractStatus(

@@ -127,6 +127,8 @@ export interface ClientContract {
   contract_end: string | null;
   status: string;
   notes: string | null;
+  file_path: string | null;
+  file_name: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -2,13 +2,17 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
+import { FileText, Paperclip, Plus, Trash2, Upload } from "lucide-react";
 import {
   addDeliverable,
+  attachContractFile,
   createContract,
   deleteDeliverable,
+  getContractFileUrl,
+  removeContractFile,
   updateContractStatus,
 } from "./actions";
+import { createClient } from "@/lib/supabase-browser";
 import {
   BILLING_TYPE_LABELS,
   type BillingType,
@@ -26,6 +30,20 @@ const BILLING_TYPES: BillingType[] = [
 
 const FREQUENCIES: DeliverableFrequency[] = ["weekly", "monthly", "one_time"];
 
+async function uploadContractFile(clientId: string, contractId: string, file: File) {
+  const supabase = createClient();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${clientId}/${contractId}/${Date.now()}-${safeName}`;
+  const { error } = await supabase.storage.from("contract-files").upload(path, file, {
+    contentType: file.type || "application/pdf",
+  });
+  if (error) {
+    alert(`Couldn't upload file: ${error.message}`);
+    return;
+  }
+  await attachContractFile(clientId, contractId, path, file.name);
+}
+
 export default function ContractPanel({
   clientId,
   contracts,
@@ -37,7 +55,10 @@ export default function ContractPanel({
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNewContract, setShowNewContract] = useState(contracts.length === 0);
+  const [saving, setSaving] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   return (
     <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-5">
@@ -57,6 +78,7 @@ export default function ContractPanel({
         <form
           ref={formRef}
           action={async (formData) => {
+            setSaving(true);
             const billingType = String(formData.get("billingType")) as BillingType;
             const rateAmount = formData.get("rateAmount")
               ? Number(formData.get("rateAmount"))
@@ -64,15 +86,24 @@ export default function ContractPanel({
             const contractStart = String(formData.get("contractStart") || "") || null;
             const contractEnd = String(formData.get("contractEnd") || "") || null;
             const notes = String(formData.get("notes") || "") || null;
-            formRef.current?.reset();
-            setShowNewContract(false);
-            await createContract(clientId, {
+            const file = fileInputRef.current?.files?.[0] ?? null;
+
+            const contract = await createContract(clientId, {
               billingType,
               rateAmount,
               contractStart,
               contractEnd,
               notes,
             });
+
+            if (contract && file) {
+              await uploadContractFile(clientId, contract.id, file);
+            }
+
+            formRef.current?.reset();
+            setSelectedFileName(null);
+            setShowNewContract(false);
+            setSaving(false);
             router.refresh();
           }}
           className="mb-5 grid grid-cols-2 gap-3 rounded-lg bg-[var(--paper)] p-4 sm:grid-cols-4"
@@ -108,13 +139,25 @@ export default function ContractPanel({
           <textarea
             name="notes"
             placeholder="Scope notes…"
-            className="col-span-2 h-16 resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none sm:col-span-3"
+            className="col-span-2 h-16 resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none sm:col-span-2"
           />
+          <label className="col-span-2 flex h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-[var(--ink)]/20 bg-[var(--paper-raised)] text-xs text-[var(--ink-soft)] hover:border-[var(--ink)]/40">
+            <Upload size={14} />
+            <span>{selectedFileName ?? "Attach contract PDF (optional)"}</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => setSelectedFileName(e.target.files?.[0]?.name ?? null)}
+            />
+          </label>
           <button
             type="submit"
-            className="h-fit self-end rounded-lg bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--paper)]"
+            disabled={saving}
+            className="h-fit self-end rounded-lg bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--paper)] disabled:opacity-50"
           >
-            Save contract
+            {saving ? "Saving…" : "Save contract"}
           </button>
         </form>
       )}
@@ -161,6 +204,8 @@ export default function ContractPanel({
                 <p className="mt-1 text-xs text-[var(--ink-soft)]">{contract.notes}</p>
               )}
 
+              <ContractFile clientId={clientId} contract={contract} />
+
               <div className="mt-3 space-y-1.5">
                 {(deliverablesByContract.get(contract.id) ?? []).map((d) => (
                   <div
@@ -188,6 +233,74 @@ export default function ContractPanel({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ContractFile({
+  clientId,
+  contract,
+}: {
+  clientId: string;
+  contract: ClientContract;
+}) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  if (contract.file_path) {
+    return (
+      <div className="mt-3 flex items-center justify-between rounded-md bg-[var(--paper)] px-2 py-1.5 text-xs">
+        <button
+          onClick={async () => {
+            const url = await getContractFileUrl(contract.file_path!);
+            if (url) window.open(url, "_blank");
+          }}
+          className="flex items-center gap-1.5 truncate text-[var(--teal)] hover:underline"
+        >
+          <FileText size={12} className="shrink-0" />
+          <span className="truncate">{contract.file_name ?? "Contract file"}</span>
+        </button>
+        <button
+          onClick={async () => {
+            setBusy(true);
+            await removeContractFile(clientId, contract.id);
+            setBusy(false);
+            router.refresh();
+          }}
+          disabled={busy}
+          className="ml-2 shrink-0 text-[var(--ink-soft)] hover:text-[var(--rust)]"
+        >
+          <Trash2 size={12} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setBusy(true);
+          await uploadContractFile(clientId, contract.id, file);
+          setBusy(false);
+          router.refresh();
+        }}
+      />
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="flex items-center gap-1.5 text-xs text-[var(--ink-soft)] hover:text-[var(--ink)] disabled:opacity-50"
+      >
+        <Paperclip size={12} />
+        {busy ? "Uploading…" : "Attach contract PDF"}
+      </button>
     </div>
   );
 }
