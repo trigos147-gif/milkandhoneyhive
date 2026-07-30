@@ -50,15 +50,15 @@ export default async function ClientDetailPage({
       clients={clients}
       workspaceName={workspace?.name ?? "Client Flow"}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 border border-[var(--ink)]/12 bg-[var(--paper-raised)] px-4 py-3">
         <span
-          className="h-3 w-3 rounded-full"
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: client.color }}
         />
-        <h1 className="font-display text-3xl font-medium">{client.name}</h1>
+        <h1 className="font-display text-xl font-medium">{client.name}</h1>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-0">
         <ClientTabs
           board={<Board clientId={id} items={items} pillars={pillars} />}
           contract={

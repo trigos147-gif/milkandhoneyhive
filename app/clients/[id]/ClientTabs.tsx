@@ -25,21 +25,18 @@ export default function ClientTabs({
 
   return (
     <div>
-      <div className="flex items-center gap-1 border-b border-[var(--ink)]/10">
+      <div className="flex items-center gap-0.5 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-2">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActive(tab.key)}
-            className={`relative px-3 py-2.5 text-sm font-medium transition-colors ${
+            className={`border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
               active === tab.key
-                ? "text-[var(--ink)]"
-                : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                ? "border-[var(--teal)] text-[var(--ink)]"
+                : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"
             }`}
           >
             {tab.label}
-            {active === tab.key && (
-              <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[var(--teal)]" />
-            )}
           </button>
         ))}
       </div>
