@@ -47,7 +47,7 @@ export default function Board({
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="grid grid-cols-5 gap-3">
       {PHASE_ORDER.map((phase) => {
         const style = PHASE_STYLE[phase];
         const phaseItems = itemsFor(phase);
@@ -56,7 +56,7 @@ export default function Board({
         return (
           <div
             key={phase}
-            className={`w-72 shrink-0 rounded-xl border transition-colors ${
+            className={`min-w-0 rounded-xl border transition-colors ${
               isOver
                 ? "border-[var(--ink)]/40 bg-black/[0.03]"
                 : "border-[var(--ink)]/10 bg-black/[0.015]"
@@ -68,19 +68,19 @@ export default function Board({
             onDragLeave={() => setDragOverPhase(null)}
             onDrop={() => handleDrop(phase)}
           >
-            <div className="flex items-center justify-between px-3 py-3">
+            <div className="flex items-center justify-between px-2.5 py-3">
               <span
-                className="rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide"
+                className="truncate rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wide"
                 style={{ backgroundColor: style.bg, color: style.text }}
               >
                 {PHASE_LABELS[phase]}
               </span>
-              <span className="text-xs font-medium text-[var(--ink-soft)]">
+              <span className="shrink-0 pl-1 text-xs font-medium text-[var(--ink-soft)]">
                 {phaseItems.length}
               </span>
             </div>
 
-            <div className="space-y-2 px-3 pb-2">
+            <div className="space-y-2 px-2.5 pb-2">
               {phaseItems.map((item) => {
                 const pillar = item.pillar_id ? pillarById.get(item.pillar_id) : null;
                 return (
@@ -89,7 +89,7 @@ export default function Board({
                     draggable
                     onDragStart={() => setDragItemId(item.id)}
                     onDragEnd={() => setDragItemId(null)}
-                    className={`cursor-grab rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-3 shadow-sm active:cursor-grabbing ${
+                    className={`cursor-grab rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2.5 shadow-sm active:cursor-grabbing ${
                       dragItemId === item.id ? "opacity-40" : ""
                     }`}
                   >
@@ -98,25 +98,25 @@ export default function Board({
                       item={item}
                     />
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--ink-soft)]">
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--ink-soft)]">
                       {pillar && (
-                        <span className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5">
+                        <span className="flex items-center gap-1 rounded-full bg-black/5 px-1.5 py-0.5">
                           <span
-                            className="h-1.5 w-1.5 rounded-full"
+                            className="h-1.5 w-1.5 shrink-0 rounded-full"
                             style={{ backgroundColor: pillar.color }}
                           />
-                          {pillar.name}
+                          <span className="truncate">{pillar.name}</span>
                         </span>
                       )}
                       {item.format && (
-                        <span className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 capitalize">
-                          <Tag size={11} />
+                        <span className="flex items-center gap-1 rounded-full bg-black/5 px-1.5 py-0.5 capitalize">
+                          <Tag size={11} className="shrink-0" />
                           {item.format}
                         </span>
                       )}
                       {item.scheduled_date && (
-                        <span className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5">
-                          <Calendar size={11} />
+                        <span className="flex items-center gap-1 rounded-full bg-black/5 px-1.5 py-0.5">
+                          <Calendar size={11} className="shrink-0" />
                           {format(parseISO(item.scheduled_date), "MMM d")}
                         </span>
                       )}
@@ -132,10 +132,10 @@ export default function Board({
                   createContentItem(clientId, phase).then(() => router.refresh());
                 });
               }}
-              className="flex w-full items-center gap-1.5 rounded-b-xl px-3 py-3 text-sm font-medium text-[var(--ink-soft)] hover:bg-black/[0.03] hover:text-[var(--ink)]"
+              className="flex w-full items-center justify-center gap-1 rounded-b-xl px-2 py-3 text-xs font-medium text-[var(--ink-soft)] hover:bg-black/[0.03] hover:text-[var(--ink)]"
             >
-              <Plus size={15} />
-              Create Content
+              <Plus size={14} />
+              Create
             </button>
           </div>
         );

@@ -17,7 +17,7 @@ export default function ActivityPanel({
   const router = useRouter();
 
   return (
-    <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
+    <div className="max-w-xl rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
       <form
         ref={formRef}
         action={async (formData) => {

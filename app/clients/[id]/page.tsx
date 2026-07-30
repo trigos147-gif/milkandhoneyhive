@@ -3,6 +3,7 @@ import AppShell from "@/components/AppShell";
 import Board from "./Board";
 import ActivityPanel from "./ActivityPanel";
 import ContractPanel from "./ContractPanel";
+import ClientTabs from "./ClientTabs";
 import {
   getClient,
   getClientActivity,
@@ -57,16 +58,17 @@ export default async function ClientDetailPage({
         <h1 className="font-display text-3xl font-medium">{client.name}</h1>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <Board clientId={id} items={items} pillars={pillars} />
-        <ActivityPanel clientId={id} activity={activity} />
-      </div>
-
       <div className="mt-6">
-        <ContractPanel
-          clientId={id}
-          contracts={contracts}
-          deliverablesByContract={deliverablesByContract}
+        <ClientTabs
+          board={<Board clientId={id} items={items} pillars={pillars} />}
+          contract={
+            <ContractPanel
+              clientId={id}
+              contracts={contracts}
+              deliverablesByContract={deliverablesByContract}
+            />
+          }
+          activity={<ActivityPanel clientId={id} activity={activity} />}
         />
       </div>
     </AppShell>
