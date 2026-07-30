@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   addDays,
@@ -16,8 +17,9 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import ContentDrawer from "../clients/[id]/ContentDrawer";
 import { PHASE_LABELS } from "@/lib/types";
-import type { Client, ContentItem, ContentPhase, Task } from "@/lib/types";
+import type { Client, ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
 
 type View = "day" | "week" | "month";
 type Mode = "production" | "publish";
@@ -34,17 +36,22 @@ export default function GlobalCalendar({
   clients,
   items,
   tasks,
+  pillars,
 }: {
   clients: Client[];
   items: ContentItem[];
   tasks: Task[];
+  pillars: ContentPillar[];
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("publish");
   const [view, setView] = useState<View>("month");
   const [anchor, setAnchor] = useState(new Date(new Date().toDateString()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
 
   const clientById = useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
+  const openItem = openItemId ? items.find((i) => i.id === openItemId) ?? null : null;
 
   const entriesByDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
@@ -166,6 +173,7 @@ export default function GlobalCalendar({
               setAnchor(d);
               setView("day");
             }}
+            onOpenItem={setOpenItemId}
           />
         )}
         {view === "week" && (
@@ -178,6 +186,7 @@ export default function GlobalCalendar({
                 setAnchor(d);
                 setView("day");
               }}
+              onOpenItem={setOpenItemId}
             />
           </div>
         )}
@@ -187,25 +196,56 @@ export default function GlobalCalendar({
               mode={mode}
               entries={entriesByDate.get(dateKey(selectedDay ?? anchor)) ?? []}
               clientById={clientById}
+              onOpenItem={setOpenItemId}
             />
           </div>
         )}
       </div>
+
+      {openItem && (
+        <ContentDrawer
+          clientId={openItem.client_id}
+          item={openItem}
+          pillars={pillars}
+          subtasks={tasks.filter((t) => t.content_item_id === openItem.id)}
+          onClose={() => {
+            setOpenItemId(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function Chip({ entry, clientById }: { entry: CalendarEntry; clientById: Map<string, Client> }) {
+function Chip({
+  entry,
+  clientById,
+  onOpenItem,
+}: {
+  entry: CalendarEntry;
+  clientById: Map<string, Client>;
+  onOpenItem: (id: string) => void;
+}) {
   const client = clientById.get(entry.clientId);
   const label = entry.data.title;
+  const clickable = entry.kind === "content";
   return (
-    <div
-      className="truncate rounded px-1.5 py-0.5 text-[11px]"
+    <button
+      type="button"
+      disabled={!clickable}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (clickable) onOpenItem(entry.id);
+      }}
+      className={`block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] ${
+        clickable ? "cursor-pointer hover:underline" : "cursor-default"
+      }`}
       style={{ backgroundColor: `${client?.color ?? "#999"}22`, color: client?.color ?? "#666" }}
       title={`${client?.name ?? "Unknown"} — ${label}`}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
@@ -214,11 +254,13 @@ function MonthGrid({
   entriesByDate,
   clientById,
   onSelectDay,
+  onOpenItem,
 }: {
   anchor: Date;
   entriesByDate: Map<string, CalendarEntry[]>;
   clientById: Map<string, Client>;
   onSelectDay: (d: Date) => void;
+  onOpenItem: (id: string) => void;
 }) {
   const start = startOfWeek(startOfMonth(anchor));
   const end = endOfWeek(endOfMonth(anchor));
@@ -243,10 +285,13 @@ function MonthGrid({
         const entries = entriesByDate.get(key) ?? [];
         const inMonth = isSameMonth(day, anchor);
         return (
-          <button
+          <div
             key={key}
+            role="button"
+            tabIndex={0}
             onClick={() => onSelectDay(day)}
-            className={`h-full min-h-[100px] bg-[var(--paper-raised)] p-1.5 text-left align-top hover:bg-black/[0.02] ${
+            onKeyDown={(e) => e.key === "Enter" && onSelectDay(day)}
+            className={`h-full min-h-[100px] cursor-pointer bg-[var(--paper-raised)] p-1.5 text-left align-top hover:bg-black/[0.02] ${
               !inMonth ? "opacity-40" : ""
             }`}
           >
@@ -259,13 +304,13 @@ function MonthGrid({
             </span>
             <div className="mt-1 space-y-0.5">
               {entries.slice(0, 3).map((e) => (
-                <Chip key={`${e.kind}-${e.id}`} entry={e} clientById={clientById} />
+                <Chip key={`${e.kind}-${e.id}`} entry={e} clientById={clientById} onOpenItem={onOpenItem} />
               ))}
               {entries.length > 3 && (
                 <p className="text-[10px] text-[var(--ink-soft)]">+{entries.length - 3} more</p>
               )}
             </div>
-          </button>
+          </div>
         );
       })}
     </div>
@@ -277,11 +322,13 @@ function WeekGrid({
   entriesByDate,
   clientById,
   onSelectDay,
+  onOpenItem,
 }: {
   anchor: Date;
   entriesByDate: Map<string, CalendarEntry[]>;
   clientById: Map<string, Client>;
   onSelectDay: (d: Date) => void;
+  onOpenItem: (id: string) => void;
 }) {
   const days = eachDayOfInterval({ start: startOfWeek(anchor), end: endOfWeek(anchor) });
 
@@ -291,10 +338,13 @@ function WeekGrid({
         const key = dateKey(day);
         const entries = entriesByDate.get(key) ?? [];
         return (
-          <button
+          <div
             key={key}
+            role="button"
+            tabIndex={0}
             onClick={() => onSelectDay(day)}
-            className="h-full min-h-[220px] rounded-lg border border-[var(--ink)]/10 p-2 text-left hover:bg-black/[0.02]"
+            onKeyDown={(e) => e.key === "Enter" && onSelectDay(day)}
+            className="h-full min-h-[220px] cursor-pointer rounded-lg border border-[var(--ink)]/10 p-2 text-left hover:bg-black/[0.02]"
           >
             <p className="font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
               {format(day, "EEE")}
@@ -308,10 +358,10 @@ function WeekGrid({
             </span>
             <div className="mt-2 space-y-1">
               {entries.map((e) => (
-                <Chip key={`${e.kind}-${e.id}`} entry={e} clientById={clientById} />
+                <Chip key={`${e.kind}-${e.id}`} entry={e} clientById={clientById} onOpenItem={onOpenItem} />
               ))}
             </div>
-          </button>
+          </div>
         );
       })}
     </div>
@@ -322,10 +372,12 @@ function DayAgenda({
   mode,
   entries,
   clientById,
+  onOpenItem,
 }: {
   mode: Mode;
   entries: CalendarEntry[];
   clientById: Map<string, Client>;
+  onOpenItem: (id: string) => void;
 }) {
   if (entries.length === 0) {
     return (
@@ -340,28 +392,45 @@ function DayAgenda({
       {entries.map((entry) => {
         const client = clientById.get(entry.clientId);
         const isTask = entry.kind === "task";
-        return (
-          <Link
-            key={`${entry.kind}-${entry.id}`}
-            href={`/clients/${entry.clientId}`}
-            className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 hover:bg-black/[0.015]"
-          >
-            <div className="flex items-center gap-2.5">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: client?.color ?? "#999" }}
-              />
-              <div>
-                <p className="text-sm">{entry.data.title}</p>
-                <p className="text-xs text-[var(--ink-soft)]">
-                  {client?.name ?? "Unknown client"}
-                  {!isTask &&
-                    ` · ${PHASE_LABELS[(entry.data as ContentItem).phase as ContentPhase] ?? ""}`}
-                  {isTask && (entry.data as Task).task_type ? ` · ${(entry.data as Task).task_type}` : ""}
-                </p>
-              </div>
+
+        const inner = (
+          <div className="flex items-center gap-2.5">
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: client?.color ?? "#999" }}
+            />
+            <div>
+              <p className="text-sm">{entry.data.title}</p>
+              <p className="text-xs text-[var(--ink-soft)]">
+                {client?.name ?? "Unknown client"}
+                {!isTask &&
+                  ` · ${PHASE_LABELS[(entry.data as ContentItem).phase as ContentPhase] ?? ""}`}
+                {isTask && (entry.data as Task).task_type ? ` · ${(entry.data as Task).task_type}` : ""}
+              </p>
             </div>
-          </Link>
+          </div>
+        );
+
+        if (isTask) {
+          return (
+            <Link
+              key={`${entry.kind}-${entry.id}`}
+              href={`/clients/${entry.clientId}`}
+              className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 hover:bg-black/[0.015]"
+            >
+              {inner}
+            </Link>
+          );
+        }
+
+        return (
+          <button
+            key={`${entry.kind}-${entry.id}`}
+            onClick={() => onOpenItem(entry.id)}
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 text-left hover:bg-black/[0.015]"
+          >
+            {inner}
+          </button>
         );
       })}
     </div>
