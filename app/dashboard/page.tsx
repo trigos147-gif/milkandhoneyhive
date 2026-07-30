@@ -1,12 +1,13 @@
 import AppShell from "@/components/AppShell";
-import CrossClientCalendar from "./CrossClientCalendar";
-import { getClients, getContentItems, getCurrentWorkspace } from "@/lib/queries";
+import GlobalCalendar from "./GlobalCalendar";
+import { getClients, getContentItems, getCurrentWorkspace, getTasks } from "@/lib/queries";
 
 export default async function DashboardPage() {
-  const [workspace, clients, items] = await Promise.all([
+  const [workspace, clients, items, tasks] = await Promise.all([
     getCurrentWorkspace(),
     getClients(),
     getContentItems(),
+    getTasks(),
   ]);
 
   const activeClients = clients.filter((c) => c.status === "active");
@@ -17,14 +18,17 @@ export default async function DashboardPage() {
       clients={clients}
       workspaceName={workspace?.name ?? "Client Flow"}
     >
-      <p className="font-mono-data text-xs uppercase tracking-wide text-[var(--ink-soft)]">
-        Overview
-      </p>
-      <h1 className="font-display text-3xl font-medium">Everything, one board.</h1>
-      <p className="mt-1 text-sm text-[var(--ink-soft)]">
-        Every client&apos;s content and key dates, in one place — no toggling between
-        spaces.
-      </p>
+      <div className="-mx-8 -mt-8 flex items-center justify-between border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-4 py-3">
+        <div>
+          <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+            Overview
+          </p>
+          <h1 className="font-display text-xl font-medium">Everything, one board.</h1>
+        </div>
+        <span className="text-xs text-[var(--ink-soft)]">
+          {activeClients.length} active client{activeClients.length === 1 ? "" : "s"}
+        </span>
+      </div>
 
       {clients.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)] p-10 text-center">
@@ -40,15 +44,10 @@ export default async function DashboardPage() {
           </a>
         </div>
       ) : (
-        <CrossClientCalendar clients={clients} items={items} />
+        <div className="mt-0">
+          <GlobalCalendar clients={clients} items={items} tasks={tasks} />
+        </div>
       )}
-
-      <div className="mt-6 flex items-center justify-between text-sm">
-        <span className="text-[var(--ink-soft)]">{activeClients.length} active clients</span>
-        <a href="/clients" className="text-[var(--teal)]">
-          View all clients →
-        </a>
-      </div>
     </AppShell>
   );
 }
