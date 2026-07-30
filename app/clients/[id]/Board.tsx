@@ -75,7 +75,7 @@ export default function Board({
           >
             <div className="flex items-center justify-between px-2.5 py-3">
               <span
-                className="truncate rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wide"
+                className="truncate rounded-md px-2 py-1 text-sm font-bold uppercase tracking-wide"
                 style={{ backgroundColor: style.bg, color: style.text }}
               >
                 {PHASE_LABELS[phase]}

@@ -18,6 +18,7 @@ import {
 import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { createTask, deleteTask, toggleTaskChecked } from "./actions";
 import { PHASE_STYLE } from "./Board";
+import { PHASE_LABELS } from "@/lib/types";
 import type { ContentItem, ContentPillar, Task } from "@/lib/types";
 
 type View = "day" | "week" | "month";
@@ -414,7 +415,7 @@ function DayRow({
             className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
             style={{ backgroundColor: style.bg, color: style.text }}
           >
-            {entry.data.phase.replace("_", " ")}
+            {PHASE_LABELS[entry.data.phase]}
           </span>
           <span className="text-sm">{entry.data.title}</span>
           {pillar && <span className="text-xs text-[var(--ink-soft)]">· {pillar.name}</span>}

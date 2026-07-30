@@ -201,10 +201,10 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 
 export const PHASE_LABELS: Record<ContentPhase, string> = {
   idea: "Idea",
-  in_progress: "In Progress",
+  in_progress: "Drafting",
   pending: "Pending",
   approved: "Approved",
-  closed: "Closed",
+  closed: "Posted",
 };
 
 export const PHASE_ORDER: ContentPhase[] = [
