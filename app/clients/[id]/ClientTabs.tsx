@@ -28,15 +28,15 @@ export default function ClientTabs({
 
   return (
     <div>
-      <div className="-mx-8 flex items-center gap-0.5 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-2">
+      <div className="-mx-8 flex items-center gap-1 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-2 py-1.5">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActive(tab.key)}
-            className={`border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               active === tab.key
-                ? "border-[var(--teal)] text-[var(--ink)]"
-                : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                ? "bg-black/[0.06] text-[var(--ink)]"
+                : "text-[var(--ink-soft)] hover:bg-black/[0.03] hover:text-[var(--ink)]"
             }`}
           >
             {tab.label}
