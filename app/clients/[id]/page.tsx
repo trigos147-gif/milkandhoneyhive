@@ -57,16 +57,17 @@ export default async function ClientDetailPage({
         <h1 className="font-display text-3xl font-medium">{client.name}</h1>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Board clientId={id} items={items} pillars={pillars} />
-        <div className="space-y-6">
-          <ContractPanel
-            clientId={id}
-            contracts={contracts}
-            deliverablesByContract={deliverablesByContract}
-          />
-          <ActivityPanel clientId={id} activity={activity} />
-        </div>
+        <ActivityPanel clientId={id} activity={activity} />
+      </div>
+
+      <div className="mt-6">
+        <ContractPanel
+          clientId={id}
+          contracts={contracts}
+          deliverablesByContract={deliverablesByContract}
+        />
       </div>
     </AppShell>
   );

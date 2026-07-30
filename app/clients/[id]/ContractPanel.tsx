@@ -40,8 +40,8 @@ export default function ContractPanel({
   const [showNewContract, setShowNewContract] = useState(contracts.length === 0);
 
   return (
-    <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-5">
+      <div className="mb-4 flex items-center justify-between">
         <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
           Contract & deliverables
         </p>
@@ -75,48 +75,44 @@ export default function ContractPanel({
             });
             router.refresh();
           }}
-          className="mb-4 space-y-2 rounded-lg bg-[var(--paper)] p-3"
+          className="mb-5 grid grid-cols-2 gap-3 rounded-lg bg-[var(--paper)] p-4 sm:grid-cols-4"
         >
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              name="billingType"
-              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-            >
-              {BILLING_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {BILLING_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-            <input
-              name="rateAmount"
-              type="number"
-              step="0.01"
-              placeholder="Rate ($)"
-              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              name="contractStart"
-              type="date"
-              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-            />
-            <input
-              name="contractEnd"
-              type="date"
-              placeholder="Open-ended if blank"
-              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-            />
-          </div>
+          <select
+            name="billingType"
+            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+          >
+            {BILLING_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {BILLING_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
+          <input
+            name="rateAmount"
+            type="number"
+            step="0.01"
+            placeholder="Rate ($)"
+            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+          />
+          <input
+            name="contractStart"
+            type="date"
+            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+          />
+          <input
+            name="contractEnd"
+            type="date"
+            placeholder="Open-ended if blank"
+            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+          />
           <textarea
             name="notes"
             placeholder="Scope notes…"
-            className="h-16 w-full resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+            className="col-span-2 h-16 resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none sm:col-span-3"
           />
           <button
             type="submit"
-            className="rounded-lg bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--paper)]"
+            className="h-fit self-end rounded-lg bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--paper)]"
           >
             Save contract
           </button>
@@ -126,11 +122,11 @@ export default function ContractPanel({
       {contracts.length === 0 ? (
         <p className="text-sm text-[var(--ink-soft)]">No contract on file yet.</p>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {contracts.map((contract) => (
             <div
               key={contract.id}
-              className="rounded-lg border border-[var(--ink)]/8 p-3"
+              className="rounded-lg border border-[var(--ink)]/8 p-4"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -222,7 +218,7 @@ function DeliverableForm({
         });
         router.refresh();
       }}
-      className="mt-2 flex items-center gap-1.5"
+      className="mt-3 flex items-center gap-1.5"
     >
       <input
         name="quantity"
