@@ -11,10 +11,10 @@ import type { ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types
 
 export const PHASE_STYLE: Record<ContentPhase, { bg: string; text: string }> = {
   idea: { bg: "#1A1A1A", text: "#F4F2EE" },
-  in_progress: { bg: "#5B5FEF", text: "#FFFFFF" },
-  pending: { bg: "#E0524B", text: "#FFFFFF" },
+  in_progress: { bg: "var(--rust)", text: "#FFFFFF" },
+  pending: { bg: "var(--gold)", text: "#1A1A1A" },
   approved: { bg: "#3FA772", text: "#FFFFFF" },
-  closed: { bg: "#2E8FA3", text: "#FFFFFF" },
+  closed: { bg: "var(--plum)", text: "#FFFFFF" },
 };
 
 export default function Board({
