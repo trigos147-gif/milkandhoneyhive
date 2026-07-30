@@ -95,7 +95,7 @@ export default function ClientCalendar({
         : format(anchor, "EEEE, MMM d yyyy");
 
   return (
-    <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
+    <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] px-8 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
@@ -136,7 +136,7 @@ export default function ClientCalendar({
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex-1">
         {view === "month" && (
           <MonthGrid
             anchor={anchor}
@@ -220,9 +220,13 @@ function MonthGrid({
   const start = startOfWeek(startOfMonth(anchor));
   const end = endOfWeek(endOfMonth(anchor));
   const days = eachDayOfInterval({ start, end });
+  const weekRows = days.length / 7;
 
   return (
-    <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-[var(--ink)]/10 bg-[var(--ink)]/10">
+    <div
+      className="grid h-full grid-cols-7 gap-px overflow-hidden rounded-lg border border-[var(--ink)]/10 bg-[var(--ink)]/10"
+      style={{ gridTemplateRows: `auto repeat(${weekRows}, 1fr)` }}
+    >
       {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
         <div
           key={d}
@@ -239,7 +243,7 @@ function MonthGrid({
           <button
             key={key}
             onClick={() => onSelectDay(day)}
-            className={`min-h-[86px] bg-[var(--paper-raised)] p-1.5 text-left align-top hover:bg-black/[0.02] ${
+            className={`h-full min-h-[100px] bg-[var(--paper-raised)] p-1.5 text-left align-top hover:bg-black/[0.02] ${
               !inMonth ? "opacity-40" : ""
             }`}
           >
@@ -279,7 +283,7 @@ function WeekGrid({
   const days = eachDayOfInterval({ start: startOfWeek(anchor), end: endOfWeek(anchor) });
 
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="grid h-full grid-cols-7 gap-2">
       {days.map((day) => {
         const key = dateKey(day);
         const entries = entriesByDate.get(key) ?? [];
@@ -287,7 +291,7 @@ function WeekGrid({
           <button
             key={key}
             onClick={() => onSelectDay(day)}
-            className="min-h-[220px] rounded-lg border border-[var(--ink)]/10 p-2 text-left hover:bg-black/[0.02]"
+            className="h-full min-h-[220px] rounded-lg border border-[var(--ink)]/10 p-2 text-left hover:bg-black/[0.02]"
           >
             <p className="font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]">
               {format(day, "EEE")}
