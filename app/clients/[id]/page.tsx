@@ -3,6 +3,7 @@ import AppShell from "@/components/AppShell";
 import Board from "./Board";
 import ActivityPanel from "./ActivityPanel";
 import ContractPanel from "./ContractPanel";
+import ClientCalendar from "./ClientCalendar";
 import ClientTabs from "./ClientTabs";
 import {
   getClient,
@@ -13,6 +14,7 @@ import {
   getContentPillars,
   getContractDeliverables,
   getCurrentWorkspace,
+  getTasks,
 } from "@/lib/queries";
 import type { ContractDeliverable } from "@/lib/types";
 
@@ -23,7 +25,7 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
 
-  const [workspace, clients, client, items, pillars, activity, contracts] =
+  const [workspace, clients, client, items, pillars, activity, contracts, tasks] =
     await Promise.all([
       getCurrentWorkspace(),
       getClients(),
@@ -32,6 +34,7 @@ export default async function ClientDetailPage({
       getContentPillars(),
       getClientActivity(id),
       getClientContracts(id),
+      getTasks(id),
     ]);
 
   if (!client) notFound();
@@ -79,6 +82,9 @@ export default async function ClientDetailPage({
       <div className="mt-0">
         <ClientTabs
           board={<Board clientId={id} items={items} pillars={pillars} />}
+          calendar={
+            <ClientCalendar clientId={id} items={items} tasks={tasks} pillars={pillars} />
+          }
           contract={
             <ContractPanel
               clientId={id}

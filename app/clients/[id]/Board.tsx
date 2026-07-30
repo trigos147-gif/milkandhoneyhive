@@ -8,7 +8,7 @@ import { createContentItem, updateContentPhase, updateContentTitle } from "./act
 import { PHASE_LABELS, PHASE_ORDER } from "@/lib/types";
 import type { ContentItem, ContentPhase, ContentPillar } from "@/lib/types";
 
-const PHASE_STYLE: Record<ContentPhase, { bg: string; text: string }> = {
+export const PHASE_STYLE: Record<ContentPhase, { bg: string; text: string }> = {
   idea: { bg: "#1A1A1A", text: "#F4F2EE" },
   in_progress: { bg: "#5B5FEF", text: "#FFFFFF" },
   pending: { bg: "#E0524B", text: "#FFFFFF" },

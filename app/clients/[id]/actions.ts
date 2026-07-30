@@ -215,6 +215,52 @@ export async function deleteContract(clientId: string, contractId: string) {
   revalidatePath(`/clients/${clientId}`);
 }
 
+export async function createTask(
+  clientId: string,
+  data: { title: string; dueDate: string; taskType: string | null }
+) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return;
+
+  const supabase = await createClient();
+  await supabase.from("tasks").insert({
+    workspace_id: workspace.id,
+    client_id: clientId,
+    title: data.title,
+    task_type: data.taskType,
+    due_date: data.dueDate,
+    phase: "idea",
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function toggleTaskChecked(clientId: string, taskId: string, checked: boolean) {
+  const supabase = await createClient();
+  await supabase
+    .from("tasks")
+    .update({ checked_off: checked, updated_at: new Date().toISOString() })
+    .eq("id", taskId);
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function deleteTask(clientId: string, taskId: string) {
+  const supabase = await createClient();
+  await supabase.from("tasks").delete().eq("id", taskId);
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function rescheduleTask(clientId: string, taskId: string, dueDate: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("tasks")
+    .update({ due_date: dueDate, updated_at: new Date().toISOString() })
+    .eq("id", taskId);
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
 export async function addActivityNote(clientId: string, body: string) {
   const workspace = await getCurrentWorkspace();
   if (!workspace || !body.trim()) return;
