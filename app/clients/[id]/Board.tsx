@@ -4,9 +4,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Calendar, Tag } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { createContentItem, updateContentPhase, updateContentTitle } from "./actions";
+import { createContentItem, updateContentPhase } from "./actions";
+import ContentDrawer from "./ContentDrawer";
 import { PHASE_LABELS, PHASE_ORDER } from "@/lib/types";
-import type { ContentItem, ContentPhase, ContentPillar } from "@/lib/types";
+import type { ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
 
 export const PHASE_STYLE: Record<ContentPhase, { bg: string; text: string }> = {
   idea: { bg: "#1A1A1A", text: "#F4F2EE" },
@@ -20,17 +21,21 @@ export default function Board({
   clientId,
   items,
   pillars,
+  tasks,
 }: {
   clientId: string;
   items: ContentItem[];
   pillars: ContentPillar[];
+  tasks: Task[];
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dragOverPhase, setDragOverPhase] = useState<ContentPhase | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const pillarById = new Map(pillars.map((p) => [p.id, p]));
+  const selectedItem = selectedItemId ? items.find((i) => i.id === selectedItemId) ?? null : null;
 
   function itemsFor(phase: ContentPhase) {
     return items.filter((i) => i.phase === phase);
@@ -89,14 +94,12 @@ export default function Board({
                     draggable
                     onDragStart={() => setDragItemId(item.id)}
                     onDragEnd={() => setDragItemId(null)}
-                    className={`cursor-grab rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2.5 shadow-sm active:cursor-grabbing ${
+                    onClick={() => setSelectedItemId(item.id)}
+                    className={`cursor-pointer rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2.5 shadow-sm active:cursor-grabbing ${
                       dragItemId === item.id ? "opacity-40" : ""
                     }`}
                   >
-                    <ContentCardTitle
-                      clientId={clientId}
-                      item={item}
-                    />
+                    <p className="text-sm font-medium leading-snug">{item.title}</p>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--ink-soft)]">
                       {pillar && (
@@ -140,49 +143,16 @@ export default function Board({
           </div>
         );
       })}
+
+      {selectedItem && (
+        <ContentDrawer
+          clientId={clientId}
+          item={selectedItem}
+          pillars={pillars}
+          subtasks={tasks.filter((t) => t.content_item_id === selectedItem.id)}
+          onClose={() => setSelectedItemId(null)}
+        />
+      )}
     </div>
-  );
-}
-
-function ContentCardTitle({
-  clientId,
-  item,
-}: {
-  clientId: string;
-  item: ContentItem;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(item.title);
-  const router = useRouter();
-
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={() => {
-          setEditing(false);
-          if (value.trim() && value !== item.title) {
-            updateContentTitle(clientId, item.id, value.trim()).then(() =>
-              router.refresh()
-            );
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur();
-        }}
-        className="w-full rounded border border-[var(--ink)]/20 px-1.5 py-1 text-sm font-medium outline-none"
-      />
-    );
-  }
-
-  return (
-    <button
-      onClick={() => setEditing(true)}
-      className="block w-full text-left text-sm font-medium leading-snug"
-    >
-      {item.title}
-    </button>
   );
 }

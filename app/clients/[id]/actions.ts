@@ -261,6 +261,98 @@ export async function rescheduleTask(clientId: string, taskId: string, dueDate: 
   revalidatePath(`/clients/${clientId}`);
 }
 
+export async function updateContentItem(
+  clientId: string,
+  itemId: string,
+  data: {
+    title?: string;
+    format?: string;
+    pillarId?: string | null;
+    scheduledDate?: string | null;
+    scheduledTime?: string | null;
+    platforms?: string[];
+    caption?: string | null;
+    hashtags?: string | null;
+  }
+) {
+  const supabase = await createClient();
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (data.title !== undefined) update.title = data.title;
+  if (data.format !== undefined) update.format = data.format;
+  if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
+  if (data.scheduledDate !== undefined) update.scheduled_date = data.scheduledDate;
+  if (data.scheduledTime !== undefined) update.scheduled_time = data.scheduledTime;
+  if (data.platforms !== undefined) update.platforms = data.platforms;
+  if (data.caption !== undefined) update.caption = data.caption;
+  if (data.hashtags !== undefined) update.hashtags = data.hashtags;
+
+  await supabase.from("content_items").update(update).eq("id", itemId);
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function createContentSubtask(clientId: string, contentItemId: string, title: string) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return;
+
+  const supabase = await createClient();
+  await supabase.from("tasks").insert({
+    workspace_id: workspace.id,
+    client_id: clientId,
+    content_item_id: contentItemId,
+    title,
+    phase: "idea",
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function attachContentFile(
+  clientId: string,
+  contentItemId: string,
+  filePath: string,
+  fileName: string,
+  fileType: string | null
+) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return;
+
+  const supabase = await createClient();
+  await supabase.from("content_files").insert({
+    workspace_id: workspace.id,
+    content_item_id: contentItemId,
+    file_path: filePath,
+    file_name: fileName,
+    file_type: fileType,
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function removeContentFile(clientId: string, fileId: string, filePath: string) {
+  const supabase = await createClient();
+  await supabase.storage.from("content-media").remove([filePath]);
+  await supabase.from("content_files").delete().eq("id", fileId);
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function getContentFileUrl(filePath: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.storage
+    .from("content-media")
+    .createSignedUrl(filePath, 60 * 30);
+  return data?.signedUrl ?? null;
+}
+
+export async function getContentItemFiles(contentItemId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("content_files")
+    .select("*")
+    .eq("content_item_id", contentItemId)
+    .order("created_at", { ascending: true });
+  return data ?? [];
+}
+
 export async function addActivityNote(clientId: string, body: string) {
   const workspace = await getCurrentWorkspace();
   if (!workspace || !body.trim()) return;

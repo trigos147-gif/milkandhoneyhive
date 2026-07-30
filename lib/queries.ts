@@ -5,6 +5,7 @@ import type {
   Client,
   ClientActivity,
   ClientContract,
+  ContentFile,
   ContentItem,
   ContentPillar,
   ContractDeliverable,
@@ -164,6 +165,16 @@ export async function getPayments(clientId?: string): Promise<Payment[]> {
     .order("due_date", { ascending: true, nullsFirst: false });
   if (clientId) query = query.eq("client_id", clientId);
   const { data } = await query;
+  return data ?? [];
+}
+
+export async function getContentFiles(contentItemId: string): Promise<ContentFile[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("content_files")
+    .select("*")
+    .eq("content_item_id", contentItemId)
+    .order("created_at", { ascending: true });
   return data ?? [];
 }
 

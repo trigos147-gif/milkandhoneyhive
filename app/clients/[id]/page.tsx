@@ -81,7 +81,7 @@ export default async function ClientDetailPage({
 
       <div className="mt-0">
         <ClientTabs
-          board={<Board clientId={id} items={items} pillars={pillars} />}
+          board={<Board clientId={id} items={items} pillars={pillars} tasks={tasks} />}
           calendar={
             <ClientCalendar clientId={id} items={items} tasks={tasks} pillars={pillars} />
           }

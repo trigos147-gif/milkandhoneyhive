@@ -64,12 +64,25 @@ export interface ContentItem {
   pillar_id: string | null;
   phase: ContentPhase;
   scheduled_date: string | null;
+  scheduled_time: string | null;
+  platforms: string[];
   caption: string | null;
+  hashtags: string | null;
   notes: string | null;
   asset_url: string | null;
   checked_off: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface ContentFile {
+  id: string;
+  workspace_id: string;
+  content_item_id: string;
+  file_path: string;
+  file_name: string;
+  file_type: string | null;
+  created_at: string;
 }
 
 export interface Task {
@@ -81,6 +94,7 @@ export interface Task {
   phase: ContentPhase;
   due_date: string | null;
   checked_off: boolean;
+  content_item_id: string | null;
   created_at: string;
   updated_at: string;
 }
