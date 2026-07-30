@@ -73,14 +73,15 @@ export default function Board({
             onDragLeave={() => setDragOverPhase(null)}
             onDrop={() => handleDrop(phase)}
           >
-            <div className="flex items-center justify-between px-2.5 py-3">
-              <span
-                className="truncate rounded-md px-2 py-1 text-sm font-bold uppercase tracking-wide"
-                style={{ backgroundColor: style.bg, color: style.text }}
-              >
+            <div
+              className="flex items-center justify-between rounded-t-xl px-3 py-2.5"
+              style={{ backgroundColor: style.bg, color: style.text }}
+            >
+              <span className="w-5" />
+              <span className="flex-1 text-center text-sm font-bold uppercase tracking-wide">
                 {PHASE_LABELS[phase]}
               </span>
-              <span className="shrink-0 pl-1 text-xs font-medium text-[var(--ink-soft)]">
+              <span className="w-5 text-right text-xs font-medium opacity-80">
                 {phaseItems.length}
               </span>
             </div>
