@@ -22,6 +22,7 @@ import { PHASE_LABELS } from "@/lib/types";
 import type { ContentItem, ContentPillar, Task } from "@/lib/types";
 
 type View = "day" | "week" | "month";
+type Mode = "production" | "publish";
 
 type CalendarEntry =
   | { kind: "content"; id: string; date: string; data: ContentItem }
@@ -53,6 +54,7 @@ export default function ClientCalendar({
   pillars: ContentPillar[];
 }) {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("publish");
   const [view, setView] = useState<View>("month");
   const [anchor, setAnchor] = useState(new Date(new Date().toDateString()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -61,20 +63,23 @@ export default function ClientCalendar({
 
   const entriesByDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
-    for (const item of items) {
-      if (!item.scheduled_date) continue;
-      const key = item.scheduled_date;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push({ kind: "content", id: item.id, date: key, data: item });
-    }
-    for (const task of tasks) {
-      if (!task.due_date) continue;
-      const key = task.due_date;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push({ kind: "task", id: task.id, date: key, data: task });
+    if (mode === "publish") {
+      for (const item of items) {
+        if (!item.scheduled_date) continue;
+        const key = item.scheduled_date;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push({ kind: "content", id: item.id, date: key, data: item });
+      }
+    } else {
+      for (const task of tasks) {
+        if (!task.due_date) continue;
+        const key = task.due_date;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push({ kind: "task", id: task.id, date: key, data: task });
+      }
     }
     return map;
-  }, [items, tasks]);
+  }, [items, tasks, mode]);
 
   function goPrev() {
     setAnchor((a) => (view === "month" ? addMonths(a, -1) : view === "week" ? addWeeks(a, -1) : addDays(a, -1)));
@@ -97,7 +102,35 @@ export default function ClientCalendar({
 
   return (
     <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] py-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ink)]/8 px-8 pb-4">
+        <div className="flex items-center gap-0.5 rounded-md border border-[var(--ink)]/10 p-0.5">
+          {(
+            [
+              { key: "production" as Mode, label: "Production" },
+              { key: "publish" as Mode, label: "Publish" },
+            ]
+          ).map((m) => (
+            <button
+              key={m.key}
+              onClick={() => setMode(m.key)}
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                mode === m.key
+                  ? "bg-[var(--ink)] text-[var(--paper)]"
+                  : "text-[var(--ink-soft)] hover:bg-black/5"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-[var(--ink-soft)]">
+          {mode === "production"
+            ? "When work needs to get done"
+            : "When each post actually goes live"}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 px-8 pt-4">
         <div className="flex items-center gap-2">
           <button
             onClick={goPrev}
@@ -170,6 +203,7 @@ export default function ClientCalendar({
               date={selectedDay ?? anchor}
               entries={entriesByDate.get(dateKey(selectedDay ?? anchor)) ?? []}
               pillarById={pillarById}
+              mode={mode}
               onChange={() => router.refresh()}
             />
           </div>
@@ -325,12 +359,14 @@ function DayAgenda({
   date,
   entries,
   pillarById,
+  mode,
   onChange,
 }: {
   clientId: string;
   date: Date;
   entries: CalendarEntry[];
   pillarById: Map<string, ContentPillar>;
+  mode: Mode;
   onChange: () => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -341,7 +377,9 @@ function DayAgenda({
   return (
     <div>
       {sorted.length === 0 ? (
-        <p className="py-6 text-center text-sm text-[var(--ink-soft)]">Nothing scheduled for this day.</p>
+        <p className="py-6 text-center text-sm text-[var(--ink-soft)]">
+          {mode === "production" ? "No work scheduled for this day." : "Nothing going live this day."}
+        </p>
       ) : (
         <div className="space-y-2">
           {sorted.map((entry) => (
@@ -350,7 +388,7 @@ function DayAgenda({
         </div>
       )}
 
-      {adding ? (
+      {mode === "production" && (adding ? (
         <form
           ref={formRef}
           action={async (formData) => {
@@ -389,7 +427,7 @@ function DayAgenda({
         >
           <Plus size={12} /> Add a task for this day
         </button>
-      )}
+      ))}
     </div>
   );
 }
