@@ -86,7 +86,7 @@ export default function Board({
               </span>
             </div>
 
-            <div className="space-y-2 px-2.5 pb-2">
+            <div className="space-y-2 px-2.5 pb-2 pt-2.5">
               {phaseItems.map((item) => {
                 const pillar = item.pillar_id ? pillarById.get(item.pillar_id) : null;
                 return (
