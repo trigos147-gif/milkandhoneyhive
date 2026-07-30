@@ -66,7 +66,6 @@ export default function ContentDrawer({
   const subtaskFormRef = useRef<HTMLFormElement>(null);
 
   const [saving, setSaving] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
 
   const dirty =
     title !== item.title ||
@@ -96,9 +95,8 @@ export default function ContentDrawer({
       hashtags: hashtags || null,
     });
     setSaving(false);
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 1800);
     refresh();
+    onClose();
   }
 
   useEffect(() => {
@@ -419,7 +417,7 @@ export default function ContentDrawer({
 
         <div className="sticky bottom-0 flex items-center justify-between border-t border-[var(--ink)]/10 bg-[var(--paper-raised)] px-5 py-3">
           <span className="text-xs text-[var(--ink-soft)]">
-            {saving ? "Saving…" : justSaved ? "Saved" : dirty ? "Unsaved changes" : ""}
+            {saving ? "Saving…" : dirty ? "Unsaved changes" : ""}
           </span>
           <button
             onClick={handleSave}
