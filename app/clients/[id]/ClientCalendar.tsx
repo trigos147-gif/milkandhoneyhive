@@ -95,8 +95,8 @@ export default function ClientCalendar({
         : format(anchor, "EEEE, MMM d yyyy");
 
   return (
-    <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] px-8 py-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-8">
         <div className="flex items-center gap-2">
           <button
             onClick={goPrev}
@@ -150,24 +150,28 @@ export default function ClientCalendar({
           />
         )}
         {view === "week" && (
-          <WeekGrid
-            anchor={anchor}
-            entriesByDate={entriesByDate}
-            pillarById={pillarById}
-            onSelectDay={(d) => {
-              setAnchor(d);
-              setView("day");
-            }}
-          />
+          <div className="px-8">
+            <WeekGrid
+              anchor={anchor}
+              entriesByDate={entriesByDate}
+              pillarById={pillarById}
+              onSelectDay={(d) => {
+                setAnchor(d);
+                setView("day");
+              }}
+            />
+          </div>
         )}
         {view === "day" && (
-          <DayAgenda
-            clientId={clientId}
-            date={selectedDay ?? anchor}
-            entries={entriesByDate.get(dateKey(selectedDay ?? anchor)) ?? []}
-            pillarById={pillarById}
-            onChange={() => router.refresh()}
-          />
+          <div className="px-8">
+            <DayAgenda
+              clientId={clientId}
+              date={selectedDay ?? anchor}
+              entries={entriesByDate.get(dateKey(selectedDay ?? anchor)) ?? []}
+              pillarById={pillarById}
+              onChange={() => router.refresh()}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -224,13 +228,13 @@ function MonthGrid({
 
   return (
     <div
-      className="grid h-full grid-cols-7 gap-px overflow-hidden rounded-lg border border-[var(--ink)]/10 bg-[var(--ink)]/10"
+      className="grid h-full grid-cols-7 gap-px overflow-hidden border-t border-[var(--ink)]/10 bg-[var(--ink)]/10"
       style={{ gridTemplateRows: `auto repeat(${weekRows}, 1fr)` }}
     >
       {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
         <div
           key={d}
-          className="bg-[var(--paper)] px-2 py-1.5 text-center font-mono-data text-[9px] uppercase tracking-wide text-[var(--ink-soft)]"
+          className="bg-[var(--paper)] px-2 py-2.5 text-center font-mono-data text-xs font-bold uppercase tracking-wide text-[var(--ink)]"
         >
           {d}
         </div>
