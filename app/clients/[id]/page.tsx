@@ -4,11 +4,13 @@ import Board from "./Board";
 import ActivityPanel from "./ActivityPanel";
 import ContractPanel from "./ContractPanel";
 import ClientCalendar from "./ClientCalendar";
+import ClientMedia from "./ClientMedia";
 import ClientTabs from "./ClientTabs";
 import {
   getClient,
   getClientActivity,
   getClientContracts,
+  getClientMediaFiles,
   getClients,
   getContentItems,
   getContentPillars,
@@ -25,7 +27,7 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
 
-  const [workspace, clients, client, items, pillars, activity, contracts, tasks] =
+  const [workspace, clients, client, items, pillars, activity, contracts, tasks, mediaFiles] =
     await Promise.all([
       getCurrentWorkspace(),
       getClients(),
@@ -35,6 +37,7 @@ export default async function ClientDetailPage({
       getClientActivity(id),
       getClientContracts(id),
       getTasks(id),
+      getClientMediaFiles(id),
     ]);
 
   if (!client) notFound();
@@ -85,6 +88,7 @@ export default async function ClientDetailPage({
           calendar={
             <ClientCalendar clientId={id} items={items} tasks={tasks} pillars={pillars} />
           }
+          media={<ClientMedia clientId={id} files={mediaFiles} />}
           contract={
             <ContractPanel
               clientId={id}

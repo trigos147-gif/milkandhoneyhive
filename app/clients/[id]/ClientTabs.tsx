@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 const TABS = [
   { key: "board", label: "Workflow" },
   { key: "calendar", label: "Calendar" },
+  { key: "media", label: "Media" },
   { key: "contract", label: "Contract & Deliverables" },
   { key: "activity", label: "Activity" },
 ] as const;
@@ -14,17 +15,19 @@ type TabKey = (typeof TABS)[number]["key"];
 export default function ClientTabs({
   board,
   calendar,
+  media,
   contract,
   activity,
 }: {
   board: ReactNode;
   calendar: ReactNode;
+  media: ReactNode;
   contract: ReactNode;
   activity: ReactNode;
 }) {
   const [active, setActive] = useState<TabKey>("board");
 
-  const panels: Record<TabKey, ReactNode> = { board, calendar, contract, activity };
+  const panels: Record<TabKey, ReactNode> = { board, calendar, media, contract, activity };
 
   return (
     <div>

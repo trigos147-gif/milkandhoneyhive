@@ -168,6 +168,37 @@ export async function getPayments(clientId?: string): Promise<Payment[]> {
   return data ?? [];
 }
 
+export async function getClientMediaFiles(clientId: string): Promise<
+  (ContentFile & { content_item_title: string; content_item_phase: string; signed_url: string | null })[]
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("content_files")
+    .select("*, content_items!inner(client_id, title, phase)")
+    .eq("content_items.client_id", clientId)
+    .order("created_at", { ascending: false });
+
+  const rows = (data ?? []) as unknown as (ContentFile & {
+    content_items: { title: string; phase: string };
+  })[];
+
+  const withUrls = await Promise.all(
+    rows.map(async (row) => {
+      const { data: signed } = await supabase.storage
+        .from("content-media")
+        .createSignedUrl(row.file_path, 60 * 30);
+      return {
+        ...row,
+        content_item_title: row.content_items.title,
+        content_item_phase: row.content_items.phase,
+        signed_url: signed?.signedUrl ?? null,
+      };
+    })
+  );
+
+  return withUrls;
+}
+
 export async function getContentFiles(contentItemId: string): Promise<ContentFile[]> {
   const supabase = await createClient();
   const { data } = await supabase
