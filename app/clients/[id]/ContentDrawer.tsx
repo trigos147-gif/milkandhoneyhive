@@ -32,19 +32,6 @@ import type { ContentFile, ContentItem, ContentPillar, Task } from "@/lib/types"
 const FORMATS = ["Post", "Reel", "Story", "Carousel", "Video"];
 const PLATFORMS = ["Instagram", "TikTok", "Facebook", "LinkedIn", "Pinterest", "YouTube", "X"];
 
-function useDebouncedSave<T>(value: T, delay: number, save: (v: T) => void) {
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    const t = setTimeout(() => save(value), delay);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-}
-
 export default function ContentDrawer({
   clientId,
   item,
@@ -78,13 +65,41 @@ export default function ContentDrawer({
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const subtaskFormRef = useRef<HTMLFormElement>(null);
 
+  const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  const dirty =
+    title !== item.title ||
+    format !== (item.format || "Post") ||
+    pillarId !== (item.pillar_id ?? "") ||
+    JSON.stringify(platforms) !== JSON.stringify(item.platforms ?? []) ||
+    scheduledDate !== (item.scheduled_date ?? "") ||
+    scheduledTime !== (item.scheduled_time ?? "") ||
+    caption !== (item.caption ?? "") ||
+    hashtags !== (item.hashtags ?? "");
+
   function refresh() {
     router.refresh();
   }
 
-  useDebouncedSave(title, 600, (v) => v.trim() && updateContentItem(clientId, item.id, { title: v.trim() }).then(refresh));
-  useDebouncedSave(caption, 700, (v) => updateContentItem(clientId, item.id, { caption: v || null }).then(refresh));
-  useDebouncedSave(hashtags, 700, (v) => updateContentItem(clientId, item.id, { hashtags: v || null }).then(refresh));
+  async function handleSave() {
+    if (!title.trim()) return;
+    setSaving(true);
+    await updateContentItem(clientId, item.id, {
+      title: title.trim(),
+      format,
+      pillarId: pillarId || null,
+      platforms,
+      scheduledDate: scheduledDate || null,
+      scheduledTime: scheduledTime || null,
+      caption: caption || null,
+      hashtags: hashtags || null,
+    });
+    setSaving(false);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 1800);
+    refresh();
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -140,16 +155,18 @@ export default function ContentDrawer({
   }
 
   function togglePlatform(p: string) {
-    setPlatforms((prev) => {
-      const next = prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p];
-      updateContentItem(clientId, item.id, { platforms: next }).then(refresh);
-      return next;
-    });
+    setPlatforms((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
   }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/30"
+        onClick={() => {
+          if (dirty && !confirm("You have unsaved changes. Close without saving?")) return;
+          onClose();
+        }}
+      />
       <div className="relative flex h-full w-full max-w-lg flex-col overflow-y-auto border-l border-[var(--ink)]/10 bg-[var(--paper-raised)] shadow-xl">
         <div className="flex items-center justify-between border-b border-[var(--ink)]/10 px-5 py-4">
           <input
@@ -170,7 +187,13 @@ export default function ContentDrawer({
             >
               <Trash2 size={18} />
             </button>
-            <button onClick={onClose} className="text-[var(--ink-soft)] hover:text-[var(--ink)]">
+            <button
+              onClick={() => {
+                if (dirty && !confirm("You have unsaved changes. Close without saving?")) return;
+                onClose();
+              }}
+              className="text-[var(--ink-soft)] hover:text-[var(--ink)]"
+            >
               <X size={20} />
             </button>
           </div>
@@ -184,10 +207,7 @@ export default function ContentDrawer({
               </label>
               <select
                 value={format}
-                onChange={(e) => {
-                  setFormat(e.target.value);
-                  updateContentItem(clientId, item.id, { format: e.target.value }).then(refresh);
-                }}
+                onChange={(e) => setFormat(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
               >
                 {FORMATS.map((f) => (
@@ -203,10 +223,7 @@ export default function ContentDrawer({
               </label>
               <select
                 value={pillarId}
-                onChange={(e) => {
-                  setPillarId(e.target.value);
-                  updateContentItem(clientId, item.id, { pillarId: e.target.value || null }).then(refresh);
-                }}
+                onChange={(e) => setPillarId(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
               >
                 <option value="">None</option>
@@ -248,19 +265,13 @@ export default function ContentDrawer({
               <input
                 type="date"
                 value={scheduledDate}
-                onChange={(e) => {
-                  setScheduledDate(e.target.value);
-                  updateContentItem(clientId, item.id, { scheduledDate: e.target.value || null }).then(refresh);
-                }}
+                onChange={(e) => setScheduledDate(e.target.value)}
                 className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
               />
               <input
                 type="time"
                 value={scheduledTime}
-                onChange={(e) => {
-                  setScheduledTime(e.target.value);
-                  updateContentItem(clientId, item.id, { scheduledTime: e.target.value || null }).then(refresh);
-                }}
+                onChange={(e) => setScheduledTime(e.target.value)}
                 className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
               />
             </div>
@@ -404,6 +415,19 @@ export default function ContentDrawer({
               )}
             </button>
           </div>
+        </div>
+
+        <div className="sticky bottom-0 flex items-center justify-between border-t border-[var(--ink)]/10 bg-[var(--paper-raised)] px-5 py-3">
+          <span className="text-xs text-[var(--ink-soft)]">
+            {saving ? "Saving…" : justSaved ? "Saved" : dirty ? "Unsaved changes" : ""}
+          </span>
+          <button
+            onClick={handleSave}
+            disabled={!dirty || saving || !title.trim()}
+            className="rounded-lg bg-[var(--ink)] px-4 py-2 text-sm font-medium text-[var(--paper)] disabled:opacity-40"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
         </div>
       </div>
     </div>
