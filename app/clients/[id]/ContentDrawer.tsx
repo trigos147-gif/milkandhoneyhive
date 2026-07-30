@@ -184,7 +184,7 @@ export default function ContentDrawer({
             </div>
             <div>
               <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-                Pillar
+                Purpose
               </label>
               <select
                 value={pillarId}
