@@ -63,6 +63,7 @@ export default function ContractPanel({
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
   const [showNewContract, setShowNewContract] = useState(contracts.length === 0);
   const [saving, setSaving] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -146,6 +147,8 @@ export default function ContractPanel({
         <form
           ref={formRef}
           action={async () => {
+            if (submittingRef.current) return;
+            submittingRef.current = true;
             setSaving(true);
             const contract = await createContract(clientId, {
               billingType,
@@ -171,6 +174,7 @@ export default function ContractPanel({
             resetForm();
             setShowNewContract(false);
             setSaving(false);
+            submittingRef.current = false;
             router.refresh();
           }}
           className="mb-5 space-y-3 rounded-lg bg-[var(--paper)] p-4"
