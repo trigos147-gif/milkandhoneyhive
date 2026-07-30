@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 
 const TABS = [
-  { key: "board", label: "Board" },
+  { key: "board", label: "Workflow" },
   { key: "calendar", label: "Calendar" },
   { key: "contract", label: "Contract & Deliverables" },
   { key: "activity", label: "Activity" },
