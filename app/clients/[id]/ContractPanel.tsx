@@ -7,6 +7,7 @@ import {
   addDeliverable,
   attachContractFile,
   createContract,
+  deleteContract,
   deleteDeliverable,
   getContractFileUrl,
   removeContractFile,
@@ -311,18 +312,37 @@ export default function ContractPanel({
                     </span>
                   )}
                 </div>
-                <select
-                  value={contract.status}
-                  onChange={async (e) => {
-                    await updateContractStatus(clientId, contract.id, e.target.value);
-                    router.refresh();
-                  }}
-                  className="rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1 text-xs outline-none"
-                >
-                  <option value="active">Active</option>
-                  <option value="paused">Paused</option>
-                  <option value="ended">Ended</option>
-                </select>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={contract.status}
+                    onChange={async (e) => {
+                      await updateContractStatus(clientId, contract.id, e.target.value);
+                      router.refresh();
+                    }}
+                    className="rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1 text-xs outline-none"
+                  >
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="ended">Ended</option>
+                  </select>
+                  <button
+                    onClick={async () => {
+                      if (
+                        !confirm(
+                          "Delete this contract? Its deliverables will be deleted too. Payment history stays."
+                        )
+                      ) {
+                        return;
+                      }
+                      await deleteContract(clientId, contract.id);
+                      router.refresh();
+                    }}
+                    className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+                    title="Delete contract"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
               {(contract.contract_start || contract.contract_end) && (
                 <p className="mt-1 text-xs text-[var(--ink-soft)]">

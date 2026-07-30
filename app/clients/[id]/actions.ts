@@ -197,6 +197,24 @@ export async function addPayment(
   revalidatePath("/payments");
 }
 
+export async function deleteContract(clientId: string, contractId: string) {
+  const supabase = await createClient();
+
+  const { data: contract } = await supabase
+    .from("client_contracts")
+    .select("file_path")
+    .eq("id", contractId)
+    .single();
+
+  if (contract?.file_path) {
+    await supabase.storage.from("contract-files").remove([contract.file_path]);
+  }
+
+  await supabase.from("client_contracts").delete().eq("id", contractId);
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
 export async function addActivityNote(clientId: string, body: string) {
   const workspace = await getCurrentWorkspace();
   if (!workspace || !body.trim()) return;
