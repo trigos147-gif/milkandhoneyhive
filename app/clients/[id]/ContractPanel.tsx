@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Paperclip, Plus, Trash2, Upload } from "lucide-react";
+import { FileText, Loader2, Paperclip, Plus, Sparkles, Trash2, Upload, X } from "lucide-react";
 import {
   addDeliverable,
   attachContractFile,
@@ -29,6 +29,12 @@ const BILLING_TYPES: BillingType[] = [
 ];
 
 const FREQUENCIES: DeliverableFrequency[] = ["weekly", "monthly", "one_time"];
+
+type PendingDeliverable = {
+  type: string;
+  quantity: number;
+  frequency: DeliverableFrequency;
+};
 
 async function uploadContractFile(clientId: string, contractId: string, file: File) {
   const supabase = createClient();
@@ -58,7 +64,68 @@ export default function ContractPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNewContract, setShowNewContract] = useState(contracts.length === 0);
   const [saving, setSaving] = useState(false);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [parsing, setParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  const [billingType, setBillingType] = useState<BillingType>("retainer");
+  const [rateAmount, setRateAmount] = useState("");
+  const [contractStart, setContractStart] = useState("");
+  const [contractEnd, setContractEnd] = useState("");
+  const [notes, setNotes] = useState("");
+  const [pendingDeliverables, setPendingDeliverables] = useState<PendingDeliverable[]>([]);
+
+  function resetForm() {
+    formRef.current?.reset();
+    setPendingFile(null);
+    setBillingType("retainer");
+    setRateAmount("");
+    setContractStart("");
+    setContractEnd("");
+    setNotes("");
+    setPendingDeliverables([]);
+    setParseError(null);
+  }
+
+  async function handleFileSelected(file: File) {
+    setPendingFile(file);
+    setParseError(null);
+    setParsing(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/parse-contract", { method: "POST", body });
+      const parsed = await res.json();
+
+      if (!res.ok) {
+        setParseError(parsed.error ?? "Couldn't read that contract automatically.");
+        return;
+      }
+
+      if (parsed.billingType && BILLING_TYPES.includes(parsed.billingType)) {
+        setBillingType(parsed.billingType);
+      }
+      if (typeof parsed.rateAmount === "number") setRateAmount(String(parsed.rateAmount));
+      if (parsed.contractStart) setContractStart(parsed.contractStart);
+      if (parsed.contractEnd) setContractEnd(parsed.contractEnd);
+      if (parsed.notes) setNotes(parsed.notes);
+      if (Array.isArray(parsed.deliverables)) {
+        setPendingDeliverables(
+          parsed.deliverables
+            .filter((d: PendingDeliverable) => d?.type)
+            .map((d: PendingDeliverable) => ({
+              type: d.type,
+              quantity: d.quantity && d.quantity > 0 ? d.quantity : 1,
+              frequency: FREQUENCIES.includes(d.frequency) ? d.frequency : "monthly",
+            }))
+        );
+      }
+    } catch {
+      setParseError("Couldn't reach the auto-fill service. You can still fill this in by hand.");
+    } finally {
+      setParsing(false);
+    }
+  }
 
   return (
     <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-5">
@@ -77,85 +144,147 @@ export default function ContractPanel({
       {showNewContract && (
         <form
           ref={formRef}
-          action={async (formData) => {
+          action={async () => {
             setSaving(true);
-            const billingType = String(formData.get("billingType")) as BillingType;
-            const rateAmount = formData.get("rateAmount")
-              ? Number(formData.get("rateAmount"))
-              : null;
-            const contractStart = String(formData.get("contractStart") || "") || null;
-            const contractEnd = String(formData.get("contractEnd") || "") || null;
-            const notes = String(formData.get("notes") || "") || null;
-            const file = fileInputRef.current?.files?.[0] ?? null;
-
             const contract = await createContract(clientId, {
               billingType,
-              rateAmount,
-              contractStart,
-              contractEnd,
-              notes,
+              rateAmount: rateAmount ? Number(rateAmount) : null,
+              contractStart: contractStart || null,
+              contractEnd: contractEnd || null,
+              notes: notes || null,
             });
 
-            if (contract && file) {
-              await uploadContractFile(clientId, contract.id, file);
+            if (contract) {
+              if (pendingFile) {
+                await uploadContractFile(clientId, contract.id, pendingFile);
+              }
+              for (const d of pendingDeliverables) {
+                await addDeliverable(clientId, contract.id, {
+                  deliverableType: d.type,
+                  quantity: d.quantity,
+                  frequency: d.frequency,
+                });
+              }
             }
 
-            formRef.current?.reset();
-            setSelectedFileName(null);
+            resetForm();
             setShowNewContract(false);
             setSaving(false);
             router.refresh();
           }}
-          className="mb-5 grid grid-cols-2 gap-3 rounded-lg bg-[var(--paper)] p-4 sm:grid-cols-4"
+          className="mb-5 space-y-3 rounded-lg bg-[var(--paper)] p-4"
         >
-          <select
-            name="billingType"
-            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+          <label
+            className={`flex h-16 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed text-xs transition-colors ${
+              pendingFile
+                ? "border-[var(--teal)]/50 bg-[var(--teal)]/5 text-[var(--teal)]"
+                : "border-[var(--ink)]/20 bg-[var(--paper-raised)] text-[var(--ink-soft)] hover:border-[var(--ink)]/40"
+            }`}
           >
-            {BILLING_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {BILLING_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
-          <input
-            name="rateAmount"
-            type="number"
-            step="0.01"
-            placeholder="Rate ($)"
-            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-          />
-          <input
-            name="contractStart"
-            type="date"
-            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-          />
-          <input
-            name="contractEnd"
-            type="date"
-            placeholder="Open-ended if blank"
-            className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
-          />
-          <textarea
-            name="notes"
-            placeholder="Scope notes…"
-            className="col-span-2 h-16 resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none sm:col-span-2"
-          />
-          <label className="col-span-2 flex h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-[var(--ink)]/20 bg-[var(--paper-raised)] text-xs text-[var(--ink-soft)] hover:border-[var(--ink)]/40">
-            <Upload size={14} />
-            <span>{selectedFileName ?? "Attach contract PDF (optional)"}</span>
+            {parsing ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Reading contract and filling in the fields…
+              </>
+            ) : pendingFile ? (
+              <>
+                <Sparkles size={14} />
+                {pendingFile.name} — auto-filled below, review before saving
+              </>
+            ) : (
+              <>
+                <Upload size={14} />
+                Upload a contract PDF to auto-fill everything below
+              </>
+            )}
             <input
               ref={fileInputRef}
               type="file"
               accept="application/pdf"
               className="hidden"
-              onChange={(e) => setSelectedFileName(e.target.files?.[0]?.name ?? null)}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileSelected(file);
+              }}
             />
           </label>
+          {parseError && (
+            <p className="text-xs text-[var(--rust)]">{parseError}</p>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <select
+              value={billingType}
+              onChange={(e) => setBillingType(e.target.value as BillingType)}
+              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+            >
+              {BILLING_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {BILLING_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+            <input
+              value={rateAmount}
+              onChange={(e) => setRateAmount(e.target.value)}
+              type="number"
+              step="0.01"
+              placeholder="Rate ($)"
+              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+            />
+            <input
+              value={contractStart}
+              onChange={(e) => setContractStart(e.target.value)}
+              type="date"
+              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+            />
+            <input
+              value={contractEnd}
+              onChange={(e) => setContractEnd(e.target.value)}
+              type="date"
+              placeholder="Open-ended if blank"
+              className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+            />
+          </div>
+
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Scope notes…"
+            className="h-16 w-full resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-2 text-sm outline-none"
+          />
+
+          {pendingDeliverables.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                Deliverables found
+              </p>
+              {pendingDeliverables.map((d, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded-md bg-[var(--paper-raised)] px-2 py-1.5 text-xs"
+                >
+                  <span>
+                    {d.quantity}× {d.type} / {d.frequency.replace("_", " ")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPendingDeliverables((list) => list.filter((_, idx) => idx !== i))
+                    }
+                    className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={saving}
-            className="h-fit self-end rounded-lg bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--paper)] disabled:opacity-50"
+            disabled={saving || parsing}
+            className="rounded-lg bg-[var(--ink)] px-3 py-2 text-xs font-medium text-[var(--paper)] disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save contract"}
           </button>
