@@ -44,6 +44,11 @@ export default async function ClientDetailPage({
     deliverablesByContract.get(d.contract_id)!.push(d);
   }
 
+  const activeContractIds = new Set(
+    contracts.filter((c) => c.status === "active").map((c) => c.id)
+  );
+  const deliverableSummary = deliverables.filter((d) => activeContractIds.has(d.contract_id));
+
   return (
     <AppShell
       activePath={`/clients/${id}`}
@@ -56,6 +61,19 @@ export default async function ClientDetailPage({
           style={{ backgroundColor: client.color }}
         />
         <h1 className="font-display text-xl font-medium">{client.name}</h1>
+
+        {deliverableSummary.length > 0 && (
+          <div className="ml-2 flex flex-wrap items-center gap-1.5 border-l border-[var(--ink)]/10 pl-3">
+            {deliverableSummary.map((d) => (
+              <span
+                key={d.id}
+                className="rounded-full bg-black/5 px-2 py-0.5 text-xs text-[var(--ink-soft)]"
+              >
+                {d.quantity}× {d.deliverable_type} / {d.frequency.replace("_", " ")}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-0">
