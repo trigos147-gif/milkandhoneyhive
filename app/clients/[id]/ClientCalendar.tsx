@@ -15,8 +15,9 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
-import { createTask, deleteTask, toggleTaskChecked } from "./actions";
+import { ChevronLeft, ChevronRight, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { createTask, deleteTask, rescheduleTask, toggleTaskChecked } from "./actions";
+import ContentDrawer from "./ContentDrawer";
 import { PHASE_STYLE } from "./Board";
 import { PHASE_LABELS } from "@/lib/types";
 import type { ContentItem, ContentPillar, Task } from "@/lib/types";
@@ -55,11 +56,13 @@ export default function ClientCalendar({
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("publish");
-  const [view, setView] = useState<View>("month");
+  const [view, setView] = useState<View>("day");
   const [anchor, setAnchor] = useState(new Date(new Date().toDateString()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
 
   const pillarById = useMemo(() => new Map(pillars.map((p) => [p.id, p])), [pillars]);
+  const openItem = openItemId ? items.find((i) => i.id === openItemId) ?? null : null;
 
   const entriesByDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
@@ -92,6 +95,10 @@ export default function ClientCalendar({
     setAnchor(t);
     setSelectedDay(t);
   }
+  function startMyDay() {
+    goToday();
+    setView("day");
+  }
 
   const headerLabel =
     view === "month"
@@ -103,25 +110,33 @@ export default function ClientCalendar({
   return (
     <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] py-4">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ink)]/8 px-8 pb-4">
-        <div className="flex items-center gap-0.5 rounded-md border border-[var(--ink)]/10 p-0.5">
-          {(
-            [
-              { key: "production" as Mode, label: "Production" },
-              { key: "publish" as Mode, label: "Publish" },
-            ]
-          ).map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key)}
-              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                mode === m.key
-                  ? "bg-[var(--ink)] text-[var(--paper)]"
-                  : "text-[var(--ink-soft)] hover:bg-black/5"
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-md border border-[var(--ink)]/10 p-0.5">
+            {(
+              [
+                { key: "production" as Mode, label: "Production" },
+                { key: "publish" as Mode, label: "Publish" },
+              ]
+            ).map((m) => (
+              <button
+                key={m.key}
+                onClick={() => setMode(m.key)}
+                className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === m.key
+                    ? "bg-[var(--ink)] text-[var(--paper)]"
+                    : "text-[var(--ink-soft)] hover:bg-black/5"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={startMyDay}
+            className="flex items-center gap-1.5 rounded-md bg-[var(--gold)] px-3 py-1.5 text-xs font-medium text-[#1A1A1A] hover:opacity-90"
+          >
+            <Sparkles size={12} /> Start my day
+          </button>
         </div>
         <p className="text-xs text-[var(--ink-soft)]">
           {mode === "production"
@@ -198,17 +213,31 @@ export default function ClientCalendar({
         )}
         {view === "day" && (
           <div className="px-8">
-            <DayAgenda
+            <DayWorkspace
               clientId={clientId}
               date={selectedDay ?? anchor}
-              entries={entriesByDate.get(dateKey(selectedDay ?? anchor)) ?? []}
+              tasksForDay={tasks.filter((t) => t.due_date === dateKey(selectedDay ?? anchor))}
+              itemsForDay={items.filter((i) => i.scheduled_date === dateKey(selectedDay ?? anchor))}
               pillarById={pillarById}
-              mode={mode}
               onChange={() => router.refresh()}
+              onOpenItem={setOpenItemId}
             />
           </div>
         )}
       </div>
+
+      {openItem && (
+        <ContentDrawer
+          clientId={clientId}
+          item={openItem}
+          pillars={pillars}
+          subtasks={tasks.filter((t) => t.content_item_id === openItem.id)}
+          onClose={() => {
+            setOpenItemId(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -354,115 +383,142 @@ function WeekGrid({
   );
 }
 
-function DayAgenda({
+function DayWorkspace({
   clientId,
   date,
-  entries,
+  tasksForDay,
+  itemsForDay,
   pillarById,
-  mode,
   onChange,
+  onOpenItem,
 }: {
   clientId: string;
   date: Date;
-  entries: CalendarEntry[];
+  tasksForDay: Task[];
+  itemsForDay: ContentItem[];
   pillarById: Map<string, ContentPillar>;
-  mode: Mode;
   onChange: () => void;
+  onOpenItem: (id: string) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [adding, setAdding] = useState(false);
-
-  const sorted = [...entries].sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "task" ? -1 : 1));
+  const doneCount = tasksForDay.filter((t) => t.checked_off).length;
 
   return (
-    <div>
-      {sorted.length === 0 ? (
-        <p className="py-6 text-center text-sm text-[var(--ink-soft)]">
-          {mode === "production" ? "No work scheduled for this day." : "Nothing going live this day."}
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {sorted.map((entry) => (
-            <DayRow key={`${entry.kind}-${entry.id}`} clientId={clientId} entry={entry} pillarById={pillarById} onChange={onChange} />
-          ))}
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center justify-between">
+          <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+            To do
+          </p>
+          {tasksForDay.length > 0 && (
+            <p className="text-xs font-medium text-[var(--ink-soft)]">
+              {doneCount} of {tasksForDay.length} done
+            </p>
+          )}
         </div>
-      )}
 
-      {mode === "production" && (adding ? (
-        <form
-          ref={formRef}
-          action={async (formData) => {
-            const title = String(formData.get("title") || "");
-            if (!title.trim()) return;
-            const taskType = String(formData.get("taskType") || "") || null;
-            formRef.current?.reset();
-            setAdding(false);
-            await createTask(clientId, { title, dueDate: dateKey(date), taskType });
-            onChange();
-          }}
-          className="mt-3 flex items-center gap-1.5"
-        >
-          <input
-            name="title"
-            autoFocus
-            placeholder="Task title…"
-            className="flex-1 rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1.5 text-sm outline-none"
-          />
-          <input
-            name="taskType"
-            placeholder="Type (optional)"
-            className="w-32 rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1.5 text-sm outline-none"
-          />
-          <button type="submit" className="rounded-md bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--paper)]">
-            Add
+        {tasksForDay.length === 0 ? (
+          <p className="mt-2 text-sm text-[var(--ink-soft)]">Nothing on the work list for this day.</p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            {tasksForDay.map((task) => (
+              <TaskRow key={task.id} clientId={clientId} task={task} onChange={onChange} />
+            ))}
+          </div>
+        )}
+
+        {adding ? (
+          <form
+            ref={formRef}
+            action={async (formData) => {
+              const title = String(formData.get("title") || "");
+              if (!title.trim()) return;
+              const taskType = String(formData.get("taskType") || "") || null;
+              formRef.current?.reset();
+              setAdding(false);
+              await createTask(clientId, { title, dueDate: dateKey(date), taskType });
+              onChange();
+            }}
+            className="mt-2 flex items-center gap-1.5"
+          >
+            <input
+              name="title"
+              autoFocus
+              placeholder="Task title…"
+              className="flex-1 rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1.5 text-sm outline-none"
+            />
+            <input
+              name="taskType"
+              placeholder="Type (optional)"
+              className="w-32 rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1.5 text-sm outline-none"
+            />
+            <button type="submit" className="rounded-md bg-[var(--ink)] px-3 py-1.5 text-xs font-medium text-[var(--paper)]">
+              Add
+            </button>
+            <button type="button" onClick={() => setAdding(false)} className="text-[var(--ink-soft)]">
+              <X size={16} />
+            </button>
+          </form>
+        ) : (
+          <button
+            onClick={() => setAdding(true)}
+            className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[var(--teal)] hover:underline"
+          >
+            <Plus size={12} /> Add a task for this day
           </button>
-          <button type="button" onClick={() => setAdding(false)} className="text-[var(--ink-soft)]">
-            <X size={16} />
-          </button>
-        </form>
-      ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[var(--teal)] hover:underline"
-        >
-          <Plus size={12} /> Add a task for this day
-        </button>
-      ))}
+        )}
+      </div>
+
+      <div>
+        <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+          Going live
+        </p>
+        {itemsForDay.length === 0 ? (
+          <p className="mt-2 text-sm text-[var(--ink-soft)]">Nothing scheduled to post this day.</p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            {itemsForDay.map((item) => {
+              const pillar = item.pillar_id ? pillarById.get(item.pillar_id) : null;
+              const style = PHASE_STYLE[item.phase];
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onOpenItem(item.id)}
+                  className="flex w-full items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 text-left hover:bg-black/[0.015]"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                      style={{ backgroundColor: style.bg, color: style.text }}
+                    >
+                      {PHASE_LABELS[item.phase]}
+                    </span>
+                    <span className="text-sm">{item.title}</span>
+                    {pillar && <span className="text-xs text-[var(--ink-soft)]">· {pillar.name}</span>}
+                  </div>
+                  {item.scheduled_time && (
+                    <span className="text-xs text-[var(--ink-soft)]">{item.scheduled_time}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function DayRow({
+function TaskRow({
   clientId,
-  entry,
-  pillarById,
+  task,
   onChange,
 }: {
   clientId: string;
-  entry: CalendarEntry;
-  pillarById: Map<string, ContentPillar>;
+  task: Task;
   onChange: () => void;
 }) {
-  if (entry.kind === "content") {
-    const pillar = entry.data.pillar_id ? pillarById.get(entry.data.pillar_id) : null;
-    const style = PHASE_STYLE[entry.data.phase];
-    return (
-      <div className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span
-            className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-            style={{ backgroundColor: style.bg, color: style.text }}
-          >
-            {PHASE_LABELS[entry.data.phase]}
-          </span>
-          <span className="text-sm">{entry.data.title}</span>
-          {pillar && <span className="text-xs text-[var(--ink-soft)]">· {pillar.name}</span>}
-        </div>
-      </div>
-    );
-  }
-
-  const task = entry.data;
   return (
     <div className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2">
       <label className="flex flex-1 items-center gap-2">
@@ -480,15 +536,27 @@ function DayRow({
         </span>
         {task.task_type && <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>}
       </label>
-      <button
-        onClick={async () => {
-          await deleteTask(clientId, task.id);
-          onChange();
-        }}
-        className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
-      >
-        <Trash2 size={13} />
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={async () => {
+            const tomorrow = dateKey(addDays(new Date(task.due_date ?? new Date()), 1));
+            await rescheduleTask(clientId, task.id, tomorrow);
+            onChange();
+          }}
+          className="text-[10px] font-medium text-[var(--ink-soft)] hover:text-[var(--ink)] hover:underline"
+        >
+          Push to tomorrow
+        </button>
+        <button
+          onClick={async () => {
+            await deleteTask(clientId, task.id);
+            onChange();
+          }}
+          className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
     </div>
   );
 }

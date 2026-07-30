@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   addDays,
   addMonths,
@@ -16,7 +15,8 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Trash2 } from "lucide-react";
+import { deleteTask, rescheduleTask, toggleTaskChecked } from "../clients/[id]/actions";
 import ContentDrawer from "../clients/[id]/ContentDrawer";
 import { PHASE_LABELS } from "@/lib/types";
 import type { Client, ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
@@ -45,7 +45,7 @@ export default function GlobalCalendar({
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("publish");
-  const [view, setView] = useState<View>("month");
+  const [view, setView] = useState<View>("day");
   const [anchor, setAnchor] = useState(new Date(new Date().toDateString()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [openItemId, setOpenItemId] = useState<string | null>(null);
@@ -84,6 +84,10 @@ export default function GlobalCalendar({
     setAnchor(t);
     setSelectedDay(t);
   }
+  function startMyDay() {
+    goToday();
+    setView("day");
+  }
 
   const headerLabel =
     view === "month"
@@ -92,28 +96,40 @@ export default function GlobalCalendar({
         ? `${format(startOfWeek(anchor), "MMM d")} – ${format(endOfWeek(anchor), "MMM d, yyyy")}`
         : format(anchor, "EEEE, MMM d yyyy");
 
+  const dayKey = dateKey(selectedDay ?? anchor);
+  const tasksForDay = tasks.filter((t) => t.due_date === dayKey);
+  const itemsForDay = items.filter((i) => i.scheduled_date === dayKey);
+
   return (
     <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] py-4">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ink)]/8 px-8 pb-4">
-        <div className="flex items-center gap-0.5 rounded-md border border-[var(--ink)]/10 p-0.5">
-          {(
-            [
-              { key: "production" as Mode, label: "Production" },
-              { key: "publish" as Mode, label: "Publish" },
-            ]
-          ).map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key)}
-              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                mode === m.key
-                  ? "bg-[var(--ink)] text-[var(--paper)]"
-                  : "text-[var(--ink-soft)] hover:bg-black/5"
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-md border border-[var(--ink)]/10 p-0.5">
+            {(
+              [
+                { key: "production" as Mode, label: "Production" },
+                { key: "publish" as Mode, label: "Publish" },
+              ]
+            ).map((m) => (
+              <button
+                key={m.key}
+                onClick={() => setMode(m.key)}
+                className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === m.key
+                    ? "bg-[var(--ink)] text-[var(--paper)]"
+                    : "text-[var(--ink-soft)] hover:bg-black/5"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={startMyDay}
+            className="flex items-center gap-1.5 rounded-md bg-[var(--gold)] px-3 py-1.5 text-xs font-medium text-[#1A1A1A] hover:opacity-90"
+          >
+            <Sparkles size={12} /> Start my day
+          </button>
         </div>
         <p className="text-xs text-[var(--ink-soft)]">
           {mode === "production"
@@ -192,10 +208,11 @@ export default function GlobalCalendar({
         )}
         {view === "day" && (
           <div className="px-8">
-            <DayAgenda
-              mode={mode}
-              entries={entriesByDate.get(dateKey(selectedDay ?? anchor)) ?? []}
+            <DayWorkspace
+              tasksForDay={tasksForDay}
+              itemsForDay={itemsForDay}
               clientById={clientById}
+              onChange={() => router.refresh()}
               onOpenItem={setOpenItemId}
             />
           </div>
@@ -368,71 +385,169 @@ function WeekGrid({
   );
 }
 
-function DayAgenda({
-  mode,
-  entries,
+function DayWorkspace({
+  tasksForDay,
+  itemsForDay,
   clientById,
+  onChange,
   onOpenItem,
 }: {
-  mode: Mode;
-  entries: CalendarEntry[];
+  tasksForDay: Task[];
+  itemsForDay: ContentItem[];
   clientById: Map<string, Client>;
+  onChange: () => void;
   onOpenItem: (id: string) => void;
 }) {
-  if (entries.length === 0) {
-    return (
-      <p className="py-6 text-center text-sm text-[var(--ink-soft)]">
-        {mode === "production" ? "No work scheduled for this day." : "Nothing going live this day."}
-      </p>
-    );
-  }
+  const doneCount = tasksForDay.filter((t) => t.checked_off).length;
+
+  const tasksByClient = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasksForDay) {
+      if (!map.has(t.client_id)) map.set(t.client_id, []);
+      map.get(t.client_id)!.push(t);
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasksForDay]);
+
+  const itemsByClient = useMemo(() => {
+    const map = new Map<string, ContentItem[]>();
+    for (const i of itemsForDay) {
+      if (!map.has(i.client_id)) map.set(i.client_id, []);
+      map.get(i.client_id)!.push(i);
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsForDay]);
 
   return (
-    <div className="space-y-2">
-      {entries.map((entry) => {
-        const client = clientById.get(entry.clientId);
-        const isTask = entry.kind === "task";
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center justify-between">
+          <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+            To do
+          </p>
+          {tasksForDay.length > 0 && (
+            <p className="text-xs font-medium text-[var(--ink-soft)]">
+              {doneCount} of {tasksForDay.length} done
+            </p>
+          )}
+        </div>
 
-        const inner = (
-          <div className="flex items-center gap-2.5">
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: client?.color ?? "#999" }}
-            />
-            <div>
-              <p className="text-sm">{entry.data.title}</p>
-              <p className="text-xs text-[var(--ink-soft)]">
-                {client?.name ?? "Unknown client"}
-                {!isTask &&
-                  ` · ${PHASE_LABELS[(entry.data as ContentItem).phase as ContentPhase] ?? ""}`}
-                {isTask && (entry.data as Task).task_type ? ` · ${(entry.data as Task).task_type}` : ""}
-              </p>
-            </div>
+        {tasksForDay.length === 0 ? (
+          <p className="mt-2 text-sm text-[var(--ink-soft)]">Nothing on the work list for this day.</p>
+        ) : (
+          <div className="mt-2 space-y-4">
+            {[...tasksByClient.entries()].map(([clientId, clientTasks]) => {
+              const client = clientById.get(clientId);
+              return (
+                <div key={clientId}>
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: client?.color ?? "#999" }}
+                    />
+                    <p className="text-xs font-medium text-[var(--ink-soft)]">
+                      {client?.name ?? "Unknown client"}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {clientTasks.map((task) => (
+                      <TaskRow key={task.id} task={task} onChange={onChange} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        );
+        )}
+      </div>
 
-        if (isTask) {
-          return (
-            <Link
-              key={`${entry.kind}-${entry.id}`}
-              href={`/clients/${entry.clientId}`}
-              className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 hover:bg-black/[0.015]"
-            >
-              {inner}
-            </Link>
-          );
-        }
+      <div>
+        <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+          Going live
+        </p>
+        {itemsForDay.length === 0 ? (
+          <p className="mt-2 text-sm text-[var(--ink-soft)]">Nothing scheduled to post this day.</p>
+        ) : (
+          <div className="mt-2 space-y-4">
+            {[...itemsByClient.entries()].map(([clientId, clientItems]) => {
+              const client = clientById.get(clientId);
+              return (
+                <div key={clientId}>
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: client?.color ?? "#999" }}
+                    />
+                    <p className="text-xs font-medium text-[var(--ink-soft)]">
+                      {client?.name ?? "Unknown client"}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {clientItems.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => onOpenItem(item.id)}
+                        className="flex w-full items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 text-left hover:bg-black/[0.015]"
+                      >
+                        <span className="text-sm">{item.title}</span>
+                        <span className="text-xs text-[var(--ink-soft)]">
+                          {PHASE_LABELS[item.phase as ContentPhase] ?? ""}
+                          {item.scheduled_time ? ` · ${item.scheduled_time}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-        return (
-          <button
-            key={`${entry.kind}-${entry.id}`}
-            onClick={() => onOpenItem(entry.id)}
-            className="flex w-full items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 text-left hover:bg-black/[0.015]"
-          >
-            {inner}
-          </button>
-        );
-      })}
+function TaskRow({ task, onChange }: { task: Task; onChange: () => void }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2">
+      <label className="flex flex-1 items-center gap-2">
+        <input
+          type="checkbox"
+          checked={task.checked_off}
+          onChange={async (e) => {
+            await toggleTaskChecked(task.client_id, task.id, e.target.checked);
+            onChange();
+          }}
+          className="h-4 w-4 accent-[var(--teal)]"
+        />
+        <span className={`text-sm ${task.checked_off ? "text-[var(--ink-soft)] line-through" : ""}`}>
+          {task.title}
+        </span>
+        {task.task_type && <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>}
+      </label>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={async () => {
+            const tomorrow = dateKey(addDays(new Date(task.due_date ?? new Date()), 1));
+            await rescheduleTask(task.client_id, task.id, tomorrow);
+            onChange();
+          }}
+          className="text-[10px] font-medium text-[var(--ink-soft)] hover:text-[var(--ink)] hover:underline"
+        >
+          Push to tomorrow
+        </button>
+        <button
+          onClick={async () => {
+            await deleteTask(task.client_id, task.id);
+            onChange();
+          }}
+          className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
     </div>
   );
 }
