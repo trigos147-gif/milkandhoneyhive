@@ -64,6 +64,7 @@ export default function ContentDrawer({
 
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const subtaskFormRef = useRef<HTMLFormElement>(null);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const [saving, setSaving] = useState(false);
 
@@ -165,7 +166,7 @@ export default function ContentDrawer({
           onClose();
         }}
       />
-      <div className="relative flex h-full w-full max-w-lg flex-col overflow-y-auto border-l border-[var(--ink)]/10 bg-[var(--paper-raised)] shadow-xl">
+      <div className="relative flex h-full w-full max-w-4xl flex-col overflow-y-auto border-l border-[var(--ink)]/10 bg-[var(--paper-raised)] shadow-xl">
         <div className="flex items-center justify-between border-b border-[var(--ink)]/10 px-5 py-4">
           <input
             value={title}
@@ -197,221 +198,285 @@ export default function ContentDrawer({
           </div>
         </div>
 
-        <div className="flex-1 space-y-6 px-5 py-5">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="flex-1 px-5 py-5">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-[340px_1fr]">
+            {/* Media hero */}
             <div>
-              <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-                Format
-              </label>
-              <select
-                value={format}
-                onChange={(e) => setFormat(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
-              >
-                {FORMATS.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-                Purpose
-              </label>
-              <select
-                value={pillarId}
-                onChange={(e) => setPillarId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
-              >
-                <option value="">None</option>
-                {pillars.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-[var(--ink)]/10 bg-[var(--paper)]">
+                {loadingFiles ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Loader2 size={20} className="animate-spin text-[var(--ink-soft)]" />
+                  </div>
+                ) : files.length === 0 ? (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex h-full w-full flex-col items-center justify-center gap-2 text-[var(--ink-soft)] hover:bg-black/[0.02] disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 size={22} className="animate-spin" />
+                        <span className="text-xs">Uploading…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={22} />
+                        <span className="text-xs">Upload photos or graphics</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  (() => {
+                    const hero = files[Math.min(heroIndex, files.length - 1)];
+                    const heroUrl = fileUrls[hero.id];
+                    const isImage = hero.file_type?.startsWith("image/");
+                    return heroUrl ? (
+                      isImage ? (
+                        <img
+                          src={heroUrl}
+                          alt={hero.file_name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={heroUrl}
+                          controls
+                          className="h-full w-full bg-black object-contain"
+                        />
+                      )
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Loader2 size={20} className="animate-spin text-[var(--ink-soft)]" />
+                      </div>
+                    );
+                  })()
+                )}
 
-          <div>
-            <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-              <Tag size={11} /> Platforms
-            </label>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {PLATFORMS.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => togglePlatform(p)}
-                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                    platforms.includes(p)
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]"
-                      : "border-[var(--ink)]/15 text-[var(--ink-soft)] hover:bg-black/5"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-              <Calendar size={11} /> Schedule
-            </label>
-            <div className="mt-1.5 grid grid-cols-2 gap-2">
-              <input
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-                className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
-              />
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-              Caption
-            </label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Write a caption…"
-              className="mt-1 h-24 w-full resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-              <Hash size={11} /> Hashtags
-            </label>
-            <textarea
-              value={hashtags}
-              onChange={(e) => setHashtags(e.target.value)}
-              placeholder="#hashtags"
-              className="mt-1 h-14 w-full resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-              Tasks
-            </label>
-            <div className="mt-1.5 space-y-1.5">
-              {subtasks.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between rounded-md bg-[var(--paper)] px-2 py-1.5 text-sm"
-                >
-                  <label className="flex flex-1 items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={t.checked_off}
-                      onChange={async (e) => {
-                        await toggleTaskChecked(clientId, t.id, e.target.checked);
-                        refresh();
-                      }}
-                      className="h-4 w-4 accent-[var(--teal)]"
-                    />
-                    <span className={t.checked_off ? "text-[var(--ink-soft)] line-through" : ""}>
-                      {t.title}
-                    </span>
-                  </label>
+                {files.length > 0 && (
                   <button
                     onClick={async () => {
-                      await deleteTask(clientId, t.id);
+                      const hero = files[Math.min(heroIndex, files.length - 1)];
+                      if (!confirm("Remove this file?")) return;
+                      await removeContentFile(clientId, hero.id, hero.file_path);
+                      setFiles((prev) => prev.filter((x) => x.id !== hero.id));
+                      setHeroIndex(0);
                       refresh();
                     }}
-                    className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+                    className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+
+              {files.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {files.map((f, i) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setHeroIndex(i)}
+                      className={`h-12 w-12 shrink-0 overflow-hidden rounded-md border-2 bg-[var(--paper)] ${
+                        i === heroIndex ? "border-[var(--ink)]" : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      {fileUrls[f.id] && f.file_type?.startsWith("image/") ? (
+                        <img src={fileUrls[f.id]} alt={f.file_name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <FileImage size={14} className="text-[var(--ink-soft)]" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-dashed border-[var(--ink)]/25 text-[var(--ink-soft)] hover:border-[var(--ink)]/50 disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   </button>
                 </div>
-              ))}
-            </div>
-            <form
-              ref={subtaskFormRef}
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!subtaskTitle.trim()) return;
-                const t = subtaskTitle.trim();
-                setSubtaskTitle("");
-                await createContentSubtask(clientId, item.id, t);
-                refresh();
-              }}
-              className="mt-1.5 flex items-center gap-1.5"
-            >
-              <input
-                value={subtaskTitle}
-                onChange={(e) => setSubtaskTitle(e.target.value)}
-                placeholder="+ New task"
-                className="flex-1 rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1.5 text-sm outline-none"
-              />
-              <button
-                type="submit"
-                className="rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs font-medium text-[var(--paper)]"
-              >
-                <Plus size={13} />
-              </button>
-            </form>
-          </div>
-
-          <div>
-            <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-              <FileImage size={11} /> Files
-            </label>
-
-            {loadingFiles ? (
-              <p className="mt-2 text-xs text-[var(--ink-soft)]">Loading…</p>
-            ) : (
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {files.map((f) => (
-                  <FileThumb
-                    key={f.id}
-                    file={f}
-                    url={fileUrls[f.id]}
-                    clientId={clientId}
-                    onRemoved={() => {
-                      setFiles((prev) => prev.filter((x) => x.id !== f.id));
-                      refresh();
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,video/*"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) handleUpload(e.target.files);
-                e.target.value = "";
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--ink)]/20 py-3 text-xs text-[var(--ink-soft)] hover:border-[var(--ink)]/40 disabled:opacity-50"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 size={13} className="animate-spin" /> Uploading…
-                </>
-              ) : (
-                <>
-                  <Upload size={13} /> Upload photos or graphics
-                </>
               )}
-            </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) handleUpload(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            {/* Fields */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                    Format
+                  </label>
+                  <select
+                    value={format}
+                    onChange={(e) => setFormat(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                  >
+                    {FORMATS.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                    Purpose
+                  </label>
+                  <select
+                    value={pillarId}
+                    onChange={(e) => setPillarId(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                  >
+                    <option value="">None</option>
+                    {pillars.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  <Tag size={11} /> Platforms
+                </label>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {PLATFORMS.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => togglePlatform(p)}
+                      className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        platforms.includes(p)
+                          ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]"
+                          : "border-[var(--ink)]/15 text-[var(--ink-soft)] hover:bg-black/5"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  <Calendar size={11} /> Schedule
+                </label>
+                <div className="mt-1.5 grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                  />
+                  <input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  Caption
+                </label>
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Write a caption…"
+                  className="mt-1 h-24 w-full resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  <Hash size={11} /> Hashtags
+                </label>
+                <textarea
+                  value={hashtags}
+                  onChange={(e) => setHashtags(e.target.value)}
+                  placeholder="#hashtags"
+                  className="mt-1 h-14 w-full resize-none rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  Tasks
+                </label>
+                <div className="mt-1.5 space-y-1.5">
+                  {subtasks.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between rounded-md bg-[var(--paper)] px-2 py-1.5 text-sm"
+                    >
+                      <label className="flex flex-1 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={t.checked_off}
+                          onChange={async (e) => {
+                            await toggleTaskChecked(clientId, t.id, e.target.checked);
+                            refresh();
+                          }}
+                          className="h-4 w-4 accent-[var(--teal)]"
+                        />
+                        <span className={t.checked_off ? "text-[var(--ink-soft)] line-through" : ""}>
+                          {t.title}
+                        </span>
+                      </label>
+                      <button
+                        onClick={async () => {
+                          await deleteTask(clientId, t.id);
+                          refresh();
+                        }}
+                        className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <form
+                  ref={subtaskFormRef}
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!subtaskTitle.trim()) return;
+                    const t = subtaskTitle.trim();
+                    setSubtaskTitle("");
+                    await createContentSubtask(clientId, item.id, t);
+                    refresh();
+                  }}
+                  className="mt-1.5 flex items-center gap-1.5"
+                >
+                  <input
+                    value={subtaskTitle}
+                    onChange={(e) => setSubtaskTitle(e.target.value)}
+                    placeholder="+ New task"
+                    className="flex-1 rounded-md border border-[var(--ink)]/10 bg-[var(--paper)] px-2 py-1.5 text-sm outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-[var(--ink)] px-2.5 py-1.5 text-xs font-medium text-[var(--paper)]"
+                  >
+                    <Plus size={13} />
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -428,53 +493,6 @@ export default function ContentDrawer({
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function FileThumb({
-  file,
-  url,
-  clientId,
-  onRemoved,
-}: {
-  file: ContentFile;
-  url: string | undefined;
-  clientId: string;
-  onRemoved: () => void;
-}) {
-  const isImage = file.file_type?.startsWith("image/");
-  return (
-    <div className="group relative aspect-square overflow-hidden rounded-md border border-[var(--ink)]/10 bg-[var(--paper)]">
-      {url ? (
-        isImage ? (
-          <img src={url} alt={file.file_name} className="h-full w-full object-cover" />
-        ) : (
-          <a
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex h-full w-full flex-col items-center justify-center gap-1 p-1 text-center text-[10px] text-[var(--ink-soft)]"
-          >
-            <FileImage size={16} />
-            <span className="line-clamp-2">{file.file_name}</span>
-          </a>
-        )
-      ) : (
-        <div className="flex h-full w-full items-center justify-center">
-          <Loader2 size={14} className="animate-spin text-[var(--ink-soft)]" />
-        </div>
-      )}
-      <button
-        onClick={async (e) => {
-          e.preventDefault();
-          await removeContentFile(clientId, file.id, file.file_path);
-          onRemoved();
-        }}
-        className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-      >
-        <Trash2 size={11} />
-      </button>
     </div>
   );
 }
