@@ -2,22 +2,86 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const SYSTEM_PROMPT = `You extract structured contract data from social media management / content creation service contracts. Respond with ONLY valid JSON, no markdown code fences, no preamble or explanation — just the JSON object, matching this exact shape:
+const DELIVERABLE_WORDS =
+  "reels?|posts?|stories|blog\\s*posts?|videos?|newsletters?|carousels?|shorts?|tiktoks?|graphics?|emails?";
 
-{
-  "billingType": "retainer" | "per_deliverable" | "one_time" | "as_needed",
-  "rateAmount": number | null,
-  "contractStart": "YYYY-MM-DD" | null,
-  "contractEnd": "YYYY-MM-DD" | null,
-  "notes": string | null,
-  "deliverables": [{ "type": string, "quantity": number, "frequency": "weekly" | "monthly" | "one_time" }]
+function extractRate(text: string): number | null {
+  // Prefer amounts near billing-ish words, else the first plausible dollar figure.
+  const nearKeyword = text.match(
+    /(?:retainer|monthly fee|rate|price|fee|payment)[^\n$]{0,40}\$\s?([\d,]+(?:\.\d{2})?)/i
+  );
+  const anyAmount = text.match(/\$\s?([\d,]{2,}(?:\.\d{2})?)/);
+  const raw = nearKeyword?.[1] ?? anyAmount?.[1];
+  if (!raw) return null;
+  const value = Number(raw.replace(/,/g, ""));
+  return Number.isFinite(value) ? value : null;
 }
 
-Rules:
-- If a field can't be determined from the text, use null (or an empty array for deliverables). Never guess a specific dollar amount or date that isn't actually stated.
-- Keep "notes" to a short 1-2 sentence scope summary, in your own words.
-- Infer deliverable "type" from context using short labels like "Reels", "Posts", "Stories", "Blog posts", "Newsletters".
-- "quantity" and "frequency" together should describe the recurring cadence (e.g. 4 Reels / weekly), or for a one-time deliverable use frequency "one_time".`;
+function normalizeDate(raw: string): string | null {
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10);
+}
+
+function extractDates(text: string): { start: string | null; end: string | null } {
+  const datePattern =
+    /\b(?:\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4})\b/gi;
+
+  const startMatch = text.match(
+    new RegExp(`(?:effective|start(?:ing)? date|commenc\\w*)[^\\n]{0,30}(${datePattern.source})`, "i")
+  );
+  const endMatch = text.match(
+    new RegExp(`(?:end date|through|until|expir\\w*|terminat\\w*)[^\\n]{0,30}(${datePattern.source})`, "i")
+  );
+
+  const allDates = [...text.matchAll(datePattern)].map((m) => m[0]);
+
+  const start = startMatch ? normalizeDate(startMatch[1]) : allDates[0] ? normalizeDate(allDates[0]) : null;
+  const end = endMatch ? normalizeDate(endMatch[1]) : allDates[1] ? normalizeDate(allDates[1]) : null;
+
+  return { start, end };
+}
+
+function extractBillingType(
+  text: string
+): "retainer" | "per_deliverable" | "one_time" | "as_needed" {
+  const lower = text.toLowerCase();
+  if (/\bone[-\s]?time\b|\bsingle project\b/.test(lower)) return "one_time";
+  if (/\bas[-\s]?needed\b|\bper project basis\b/.test(lower)) return "as_needed";
+  if (/\bper (post|deliverable|reel|piece)\b/.test(lower)) return "per_deliverable";
+  if (/\bretainer\b|\bmonthly (fee|rate)\b/.test(lower)) return "retainer";
+  return "retainer";
+}
+
+function extractDeliverables(text: string) {
+  const results: { type: string; quantity: number; frequency: "weekly" | "monthly" | "one_time" }[] = [];
+  const pattern = new RegExp(
+    `(\\d+)\\s*(?:x|×)?\\s*(${DELIVERABLE_WORDS})\\s*(?:per|\\/|a)?\\s*(week|month)?`,
+    "gi"
+  );
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const quantity = Number(match[1]);
+    if (!quantity || quantity > 500) continue;
+    const type = match[2].replace(/\s+/g, " ").trim();
+    const label = type.charAt(0).toUpperCase() + type.slice(1);
+    const frequency = match[3]?.toLowerCase() === "week" ? "weekly" : match[3]?.toLowerCase() === "month" ? "monthly" : "monthly";
+    if (results.some((r) => r.type.toLowerCase() === label.toLowerCase() && r.frequency === frequency)) {
+      continue;
+    }
+    results.push({ type: label, quantity, frequency });
+    if (results.length >= 10) break;
+  }
+
+  return results;
+}
+
+function extractNotes(text: string): string | null {
+  const scopeMatch = text.match(/scope of (?:work|services)[:\s]+([^\n]{20,220})/i);
+  if (scopeMatch) return scopeMatch[1].trim();
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -36,7 +100,7 @@ export async function POST(req: NextRequest) {
     const parser = new PDFParse({ data: buffer });
     const result = await parser.getText();
     await parser.destroy();
-    text = result.text.slice(0, 15000);
+    text = result.text;
   } catch {
     return NextResponse.json(
       { error: "Couldn't read text from that PDF." },
@@ -51,54 +115,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Auto-fill isn't configured yet — ANTHROPIC_API_KEY is missing." },
-      { status: 500 }
-    );
-  }
+  const { start, end } = extractDates(text);
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-5",
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `Contract text:\n\n${text}` }],
-    }),
+  return NextResponse.json({
+    billingType: extractBillingType(text),
+    rateAmount: extractRate(text),
+    contractStart: start,
+    contractEnd: end,
+    notes: extractNotes(text),
+    deliverables: extractDeliverables(text),
   });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    return NextResponse.json(
-      { error: `AI parsing failed: ${errText.slice(0, 300)}` },
-      { status: 502 }
-    );
-  }
-
-  const data = await response.json();
-  const textBlock = (data.content ?? []).find(
-    (b: { type: string }) => b.type === "text"
-  );
-
-  if (!textBlock) {
-    return NextResponse.json({ error: "No response from AI." }, { status: 502 });
-  }
-
-  try {
-    const cleaned = textBlock.text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-    return NextResponse.json(parsed);
-  } catch {
-    return NextResponse.json(
-      { error: "Couldn't parse the AI's response." },
-      { status: 502 }
-    );
-  }
 }
