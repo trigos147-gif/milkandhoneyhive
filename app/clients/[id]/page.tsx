@@ -50,7 +50,7 @@ export default async function ClientDetailPage({
       clients={clients}
       workspaceName={workspace?.name ?? "Client Flow"}
     >
-      <div className="flex items-center gap-2.5 border border-[var(--ink)]/12 bg-[var(--paper-raised)] px-4 py-3">
+      <div className="-mx-8 -mt-8 flex items-center gap-2.5 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-4 py-3">
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: client.color }}

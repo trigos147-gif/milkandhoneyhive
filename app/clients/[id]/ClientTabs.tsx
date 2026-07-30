@@ -25,7 +25,7 @@ export default function ClientTabs({
 
   return (
     <div>
-      <div className="flex items-center gap-0.5 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-2">
+      <div className="-mx-8 flex items-center gap-0.5 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-2">
         {TABS.map((tab) => (
           <button
             key={tab.key}
