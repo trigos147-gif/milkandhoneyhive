@@ -147,7 +147,8 @@ export async function POST(req: NextRequest) {
     const result = await parser.getText();
     await parser.destroy();
     text = result.text;
-  } catch {
+  } catch (err) {
+    console.error("PDF parse failed:", err);
     return NextResponse.json(
       { error: "Couldn't read text from that PDF." },
       { status: 400 }
