@@ -142,10 +142,8 @@ export async function POST(req: NextRequest) {
 
   let text = "";
   try {
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    await parser.destroy();
+    const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
+    const result = await pdfParse(buffer);
     text = result.text;
   } catch (err) {
     console.error("PDF parse failed:", err);
