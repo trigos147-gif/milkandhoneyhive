@@ -261,6 +261,22 @@ export async function rescheduleTask(clientId: string, taskId: string, dueDate: 
   revalidatePath(`/clients/${clientId}`);
 }
 
+export async function deleteContentItem(clientId: string, itemId: string) {
+  const supabase = await createClient();
+
+  const { data: files } = await supabase
+    .from("content_files")
+    .select("file_path")
+    .eq("content_item_id", itemId);
+
+  if (files && files.length > 0) {
+    await supabase.storage.from("content-media").remove(files.map((f) => f.file_path));
+  }
+
+  await supabase.from("content_items").delete().eq("id", itemId);
+  revalidatePath(`/clients/${clientId}`);
+}
+
 export async function updateContentItem(
   clientId: string,
   itemId: string,

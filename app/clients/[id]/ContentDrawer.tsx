@@ -18,6 +18,7 @@ import {
 import {
   attachContentFile,
   createContentSubtask,
+  deleteContentItem,
   deleteTask,
   getContentFileUrl,
   getContentItemFiles,
@@ -156,9 +157,23 @@ export default function ContentDrawer({
             onChange={(e) => setTitle(e.target.value)}
             className="flex-1 bg-transparent font-display text-xl font-medium outline-none"
           />
-          <button onClick={onClose} className="ml-3 text-[var(--ink-soft)] hover:text-[var(--ink)]">
-            <X size={20} />
-          </button>
+          <div className="ml-3 flex items-center gap-3">
+            <button
+              onClick={async () => {
+                if (!confirm(`Delete "${item.title}"? This can't be undone.`)) return;
+                await deleteContentItem(clientId, item.id);
+                onClose();
+                router.refresh();
+              }}
+              className="text-[var(--ink-soft)] hover:text-[var(--rust)]"
+              title="Delete content"
+            >
+              <Trash2 size={18} />
+            </button>
+            <button onClick={onClose} className="text-[var(--ink-soft)] hover:text-[var(--ink)]">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 space-y-6 px-5 py-5">
