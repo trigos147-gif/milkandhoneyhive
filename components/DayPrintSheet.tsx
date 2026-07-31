@@ -1,3 +1,8 @@
+"use client";
+
+/* eslint-disable @next/next/no-img-element */
+
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import type { Client, ContentItem, Task } from "@/lib/types";
 
@@ -63,14 +68,26 @@ export default function DayPrintSheet({
   const taskGroups = clientById ? groupByClient(tasksForDay) : null;
   const itemGroups = clientById ? groupByClient(itemsForDay) : null;
 
+  const [printedAt, setPrintedAt] = useState<Date | null>(null);
+  useEffect(() => {
+    function handleBeforePrint() {
+      setPrintedAt(new Date());
+    }
+    window.addEventListener("beforeprint", handleBeforePrint);
+    return () => window.removeEventListener("beforeprint", handleBeforePrint);
+  }, []);
+
   return (
     <div id="day-print-sheet" className="hidden bg-white p-8 text-black print:block">
-      <div className="mb-6 flex items-end justify-between border-b-2 border-black pb-3">
+      <div className="mb-6 flex items-start justify-between border-b-2 border-black pb-3">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-black/60">The Hive — Daily Sheet</p>
           <h1 className="font-display text-2xl font-bold">{format(date, "EEEE, MMMM d, yyyy")}</h1>
         </div>
-        <p className="text-sm font-medium">{scopeLabel}</p>
+        <div className="flex flex-col items-end gap-1.5">
+          <img src="/logo.png" alt="Milk & Honey Hive" className="h-10 w-auto" />
+          <p className="text-sm font-medium">{scopeLabel}</p>
+        </div>
       </div>
 
       <div className="mb-8">
@@ -111,6 +128,10 @@ export default function DayPrintSheet({
         ) : (
           itemsForDay.map((i) => <ContentLine key={i.id} item={i} />)
         )}
+      </div>
+
+      <div className="mt-10 border-t border-black/20 pt-2 text-right text-[10px] text-black/50">
+        {printedAt ? `Printed ${format(printedAt, "MMM d, yyyy 'at' h:mm a")}` : ""}
       </div>
     </div>
   );
