@@ -19,6 +19,8 @@ function CheckBox({ done }: { done: boolean }) {
 }
 
 function TaskLine({ task }: { task: Task }) {
+  const showType =
+    task.task_type && !task.title.toLowerCase().includes(task.task_type.toLowerCase());
   return (
     <div
       className="flex items-center gap-3 border-b-2 py-2.5"
@@ -27,7 +29,7 @@ function TaskLine({ task }: { task: Task }) {
       <CheckBox done={task.checked_off} />
       <span className="text-[15px] font-medium text-black">
         {task.title}
-        {task.task_type ? ` — ${task.task_type}` : ""}
+        {showType ? ` — ${task.task_type}` : ""}
       </span>
     </div>
   );

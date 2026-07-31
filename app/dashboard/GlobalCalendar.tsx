@@ -591,7 +591,9 @@ function TaskRow({
           className="flex flex-1 items-center gap-1.5 text-left text-sm hover:underline disabled:opacity-60"
         >
           <span className={task.checked_off ? "text-[var(--ink-soft)] line-through" : ""}>{task.title}</span>
-          {task.task_type && <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>}
+          {task.task_type && !task.title.toLowerCase().includes(task.task_type.toLowerCase()) && (
+            <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>
+          )}
           {task.checked_off && task.checked_off_at && (
             <span className="text-[10px] text-[var(--ink-soft)]">
               · ✓ {format(new Date(task.checked_off_at), "MMM d, h:mm a")}
