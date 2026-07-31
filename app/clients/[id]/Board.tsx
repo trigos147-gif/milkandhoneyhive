@@ -12,7 +12,7 @@ import {
   PRODUCTION_STAGE_COLORS,
   PRODUCTION_STAGE_SHORT_LABELS,
 } from "@/lib/types";
-import type { ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
+import type { ContentItem, ContentPhase, ContentPillar, Tag as TagRecord, Task } from "@/lib/types";
 
 export const PHASE_STYLE: Record<ContentPhase, { bg: string; text: string }> = {
   idea: { bg: "#1A1A1A", text: "#F4F2EE" },
@@ -27,11 +27,15 @@ export default function Board({
   items,
   pillars,
   tasks,
+  tags,
+  tagMap,
 }: {
   clientId: string;
   items: ContentItem[];
   pillars: ContentPillar[];
   tasks: Task[];
+  tags: TagRecord[];
+  tagMap: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -116,6 +120,19 @@ export default function Board({
                           {PRODUCTION_STAGE_SHORT_LABELS[item.production_stage]}
                         </span>
                       )}
+                      {(tagMap[item.id] ?? []).map((tagId) => {
+                        const tag = tags.find((t) => t.id === tagId);
+                        if (!tag) return null;
+                        return (
+                          <span
+                            key={tagId}
+                            className="rounded-full px-1.5 py-0.5 font-medium text-white"
+                            style={{ backgroundColor: tag.color }}
+                          >
+                            {tag.name}
+                          </span>
+                        );
+                      })}
                       {pillar && (
                         <span className="flex items-center gap-1 rounded-full bg-black/5 px-1.5 py-0.5">
                           <span
@@ -164,6 +181,8 @@ export default function Board({
           item={selectedItem}
           pillars={pillars}
           subtasks={tasks.filter((t) => t.content_item_id === selectedItem.id)}
+          allTags={tags}
+          itemTagIds={tagMap[selectedItem.id] ?? []}
           onClose={() => setSelectedItemId(null)}
         />
       )}

@@ -57,6 +57,14 @@ export interface ContentPillar {
   sort_order: number;
 }
 
+export interface Tag {
+  id: string;
+  workspace_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
 export interface Cadence {
   id: string;
   workspace_id: string;

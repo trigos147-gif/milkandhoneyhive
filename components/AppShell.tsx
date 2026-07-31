@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Hexagon, LayoutGrid, Users, Layers, CalendarDays, DollarSign } from "lucide-react";
+import { Hexagon, LayoutGrid, Users, Layers, CalendarDays, DollarSign, Hash } from "lucide-react";
 import SignOutButton from "./SignOutButton";
 import AccountButton from "./AccountButton";
 import { getCurrentUser } from "@/lib/queries";
@@ -12,6 +12,7 @@ const NAV = [
   { href: "/dashboard", label: "Calendar", icon: LayoutGrid },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/batching", label: "Batching", icon: Layers },
+  { href: "/tags", label: "Tags", icon: Hash },
   { href: "/planning", label: "Planning", icon: CalendarDays },
   { href: "/payments", label: "Payments", icon: DollarSign },
 ];

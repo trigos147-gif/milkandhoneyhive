@@ -11,6 +11,7 @@ import type {
   ContractDeliverable,
   Payment,
   PlanningNote,
+  Tag,
   Task,
   Workspace,
 } from "./types";
@@ -88,6 +89,30 @@ export async function getContentPillars(): Promise<ContentPillar[]> {
     .select("*")
     .order("sort_order", { ascending: true });
   return data ?? [];
+}
+
+export async function getTags(): Promise<Tag[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("tags").select("*").order("name", { ascending: true });
+  return data ?? [];
+}
+
+// Returns a map of content_item_id -> array of tag_ids, for every content
+// item in the workspace (or just one client's, if clientId is given).
+export async function getContentItemTagMap(clientId?: string): Promise<Record<string, string[]>> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("content_item_tags")
+    .select("tag_id, content_item_id, content_items!inner(client_id)");
+  if (clientId) query = query.eq("content_items.client_id", clientId);
+  const { data } = await query;
+
+  const map: Record<string, string[]> = {};
+  for (const row of (data ?? []) as unknown as { tag_id: string; content_item_id: string }[]) {
+    if (!map[row.content_item_id]) map[row.content_item_id] = [];
+    map[row.content_item_id].push(row.tag_id);
+  }
+  return map;
 }
 
 export async function getCadences(): Promise<Cadence[]> {

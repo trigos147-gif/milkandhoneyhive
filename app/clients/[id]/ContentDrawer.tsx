@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { format as formatDate } from "date-fns";
 import {
   Calendar,
+  Check,
   FileImage,
   Hash,
   Loader2,
@@ -27,9 +28,18 @@ import {
   toggleContentPosted,
   toggleTaskChecked,
   updateContentItem,
+  updateContentItemTags,
 } from "./actions";
+import { createTag as createTagAction } from "@/app/tags/actions";
 import { createClient } from "@/lib/supabase-browser";
-import type { ContentFile, ContentItem, ContentPillar, ProductionStage, Task } from "@/lib/types";
+import type {
+  ContentFile,
+  ContentItem,
+  ContentPillar,
+  ProductionStage,
+  Tag as TagRecord,
+  Task,
+} from "@/lib/types";
 import { PRODUCTION_STAGE_LABELS, stagePipelineForFormat } from "@/lib/types";
 
 const FORMATS = ["Post", "Reel", "Story", "Carousel", "Video"];
@@ -40,12 +50,16 @@ export default function ContentDrawer({
   item,
   pillars,
   subtasks,
+  allTags,
+  itemTagIds,
   onClose,
 }: {
   clientId: string;
   item: ContentItem;
   pillars: ContentPillar[];
   subtasks: Task[];
+  allTags: TagRecord[];
+  itemTagIds: string[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -57,6 +71,10 @@ export default function ContentDrawer({
   );
   const [pillarId, setPillarId] = useState(item.pillar_id ?? "");
   const [platforms, setPlatforms] = useState<string[]>(item.platforms ?? []);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(itemTagIds);
+  const [newTagName, setNewTagName] = useState("");
+  const [creatingTag, setCreatingTag] = useState(false);
+  const [localTags, setLocalTags] = useState<TagRecord[]>(allTags);
   const [scheduledDate, setScheduledDate] = useState(item.scheduled_date ?? "");
   const [scheduledTime, setScheduledTime] = useState(item.scheduled_time ?? "");
   const [caption, setCaption] = useState(item.caption ?? "");
@@ -83,6 +101,7 @@ export default function ContentDrawer({
     productionStage !== (item.production_stage ?? "research") ||
     pillarId !== (item.pillar_id ?? "") ||
     JSON.stringify(platforms) !== JSON.stringify(item.platforms ?? []) ||
+    JSON.stringify([...selectedTagIds].sort()) !== JSON.stringify([...itemTagIds].sort()) ||
     scheduledDate !== (item.scheduled_date ?? "") ||
     scheduledTime !== (item.scheduled_time ?? "") ||
     caption !== (item.caption ?? "") ||
@@ -96,17 +115,20 @@ export default function ContentDrawer({
   async function handleSave() {
     if (!title.trim()) return;
     setSaving(true);
-    await updateContentItem(clientId, item.id, {
-      title: title.trim(),
-      format,
-      productionStage,
-      pillarId: pillarId || null,
-      platforms,
-      scheduledDate: scheduledDate || null,
-      scheduledTime: scheduledTime || null,
-      caption: caption || null,
-      hashtags: hashtags || null,
-    });
+    await Promise.all([
+      updateContentItem(clientId, item.id, {
+        title: title.trim(),
+        format,
+        productionStage,
+        pillarId: pillarId || null,
+        platforms,
+        scheduledDate: scheduledDate || null,
+        scheduledTime: scheduledTime || null,
+        caption: caption || null,
+        hashtags: hashtags || null,
+      }),
+      updateContentItemTags(clientId, item.id, selectedTagIds),
+    ]);
     setSaving(false);
     setFilesChanged(false);
     refresh();
@@ -169,6 +191,25 @@ export default function ContentDrawer({
 
   function togglePlatform(p: string) {
     setPlatforms((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
+  }
+
+  function toggleTag(tagId: string) {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId) ? prev.filter((x) => x !== tagId) : [...prev, tagId]
+    );
+  }
+
+  async function handleCreateTag() {
+    if (!newTagName.trim()) return;
+    setCreatingTag(true);
+    const tag = await createTagAction(newTagName.trim());
+    setCreatingTag(false);
+    setNewTagName("");
+    if (tag) {
+      setLocalTags((prev) => [...prev, tag]);
+      setSelectedTagIds((prev) => [...prev, tag.id]);
+      refresh();
+    }
   }
 
   return (
@@ -430,6 +471,54 @@ export default function ContentDrawer({
                       {p}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  <Hash size={11} /> Tags
+                </label>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {localTags.map((t) => {
+                    const active = selectedTagIds.includes(t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => toggleTag(t.id)}
+                        className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors"
+                        style={
+                          active
+                            ? { backgroundColor: t.color, borderColor: t.color, color: "#fff" }
+                            : { borderColor: "rgba(26,26,26,0.15)", color: "var(--ink-soft)" }
+                        }
+                      >
+                        {active && <Check size={11} />}
+                        {t.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <input
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleCreateTag();
+                      }
+                    }}
+                    placeholder="New tag…"
+                    className="w-28 rounded-full border border-[var(--ink)]/15 bg-[var(--paper)] px-2.5 py-1 text-xs outline-none"
+                  />
+                  <button
+                    onClick={handleCreateTag}
+                    disabled={creatingTag || !newTagName.trim()}
+                    className="flex items-center gap-1 rounded-full border border-dashed border-[var(--ink)]/25 px-2.5 py-1 text-xs text-[var(--ink-soft)] hover:bg-black/5 disabled:opacity-40"
+                  >
+                    <Plus size={11} />
+                    {creatingTag ? "Adding…" : "Add"}
+                  </button>
                 </div>
               </div>
 

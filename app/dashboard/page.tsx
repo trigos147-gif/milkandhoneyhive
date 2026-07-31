@@ -2,19 +2,23 @@ import AppShell from "@/components/AppShell";
 import GlobalCalendar from "./GlobalCalendar";
 import {
   getClients,
+  getContentItemTagMap,
   getContentItems,
   getContentPillars,
   getCurrentWorkspace,
+  getTags,
   getTasks,
 } from "@/lib/queries";
 
 export default async function DashboardPage() {
-  const [workspace, clients, items, tasks, pillars] = await Promise.all([
+  const [workspace, clients, items, tasks, pillars, tags, tagMap] = await Promise.all([
     getCurrentWorkspace(),
     getClients(),
     getContentItems(),
     getTasks(),
     getContentPillars(),
+    getTags(),
+    getContentItemTagMap(),
   ]);
 
   const activeClients = clients.filter((c) => c.status === "active");
@@ -52,7 +56,7 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div className="mt-0">
-          <GlobalCalendar clients={clients} items={items} tasks={tasks} pillars={pillars} />
+          <GlobalCalendar clients={clients} items={items} tasks={tasks} pillars={pillars} tags={tags} tagMap={tagMap} />
         </div>
       )}
     </AppShell>

@@ -28,7 +28,7 @@ import ContentDrawer from "./ContentDrawer";
 import DayPrintSheet from "@/components/DayPrintSheet";
 import { PHASE_STYLE } from "./Board";
 import { PHASE_LABELS } from "@/lib/types";
-import type { ContentItem, ContentPillar, Task } from "@/lib/types";
+import type { ContentItem, ContentPillar, Tag, Task } from "@/lib/types";
 
 type View = "day" | "week" | "month";
 type Mode = "production" | "publish";
@@ -62,12 +62,16 @@ export default function ClientCalendar({
   items,
   tasks,
   pillars,
+  tags,
+  tagMap,
 }: {
   clientId: string;
   clientName: string;
   items: ContentItem[];
   tasks: Task[];
   pillars: ContentPillar[];
+  tags: Tag[];
+  tagMap: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("publish");
@@ -260,6 +264,8 @@ export default function ClientCalendar({
           item={openItem}
           pillars={pillars}
           subtasks={tasks.filter((t) => t.content_item_id === openItem.id)}
+          allTags={tags}
+          itemTagIds={tagMap[openItem.id] ?? []}
           onClose={() => {
             setOpenItem(null);
             router.refresh();

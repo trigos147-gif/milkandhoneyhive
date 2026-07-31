@@ -404,6 +404,26 @@ export async function deleteContentItem(clientId: string, itemId: string) {
   revalidatePath(`/clients/${clientId}`);
 }
 
+export async function updateContentItemTags(
+  clientId: string,
+  itemId: string,
+  tagIds: string[]
+) {
+  const supabase = await createClient();
+
+  // Replace the full tag set for this item in one go — simplest to keep in
+  // sync with the drawer's "edit locally, commit on Save" pattern.
+  await supabase.from("content_item_tags").delete().eq("content_item_id", itemId);
+  if (tagIds.length > 0) {
+    await supabase
+      .from("content_item_tags")
+      .insert(tagIds.map((tagId) => ({ content_item_id: itemId, tag_id: tagId })));
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/tags");
+}
+
 export async function updateContentItem(
   clientId: string,
   itemId: string,

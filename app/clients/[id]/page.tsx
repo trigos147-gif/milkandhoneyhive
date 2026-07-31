@@ -13,9 +13,11 @@ import {
   getClientMediaFiles,
   getClients,
   getContentItems,
+  getContentItemTagMap,
   getContentPillars,
   getContractDeliverables,
   getCurrentWorkspace,
+  getTags,
   getTasks,
 } from "@/lib/queries";
 import type { ContractDeliverable } from "@/lib/types";
@@ -27,13 +29,15 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
 
-  const [workspace, clients, client, items, pillars, activity, contracts, tasks, mediaFiles] =
+  const [workspace, clients, client, items, pillars, tags, tagMap, activity, contracts, tasks, mediaFiles] =
     await Promise.all([
       getCurrentWorkspace(),
       getClients(),
       getClient(id),
       getContentItems(id),
       getContentPillars(),
+      getTags(),
+      getContentItemTagMap(id),
       getClientActivity(id),
       getClientContracts(id),
       getTasks(id),
@@ -84,9 +88,9 @@ export default async function ClientDetailPage({
 
       <div className="mt-0">
         <ClientTabs
-          board={<Board clientId={id} items={items} pillars={pillars} tasks={tasks} />}
+          board={<Board clientId={id} items={items} pillars={pillars} tasks={tasks} tags={tags} tagMap={tagMap} />}
           calendar={
-            <ClientCalendar clientId={id} clientName={client.name} items={items} tasks={tasks} pillars={pillars} />
+            <ClientCalendar clientId={id} clientName={client.name} items={items} tasks={tasks} pillars={pillars} tags={tags} tagMap={tagMap} />
           }
           media={<ClientMedia clientId={id} files={mediaFiles} />}
           contract={
