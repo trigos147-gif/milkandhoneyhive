@@ -423,21 +423,19 @@ function DayWorkspace({
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center justify-between">
-          <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-            To do
-          </p>
+        <div className="flex items-center justify-between border-b-2 border-[var(--ink)] pb-2">
+          <h2 className="font-display text-lg font-bold uppercase tracking-wide">To Do</h2>
           {tasksForDay.length > 0 && (
-            <p className="text-xs font-medium text-[var(--ink-soft)]">
+            <p className="text-xs font-bold text-[var(--ink-soft)]">
               {doneCount} of {tasksForDay.length} done
             </p>
           )}
         </div>
 
         {tasksForDay.length === 0 ? (
-          <p className="mt-2 text-sm text-[var(--ink-soft)]">Nothing on the work list for this day.</p>
+          <p className="mt-3 text-sm text-[var(--ink-soft)]">Nothing on the work list for this day.</p>
         ) : (
-          <div className="mt-2 space-y-4">
+          <div className="mt-3 space-y-4">
             {[...tasksByClient.entries()].map(([clientId, clientTasks]) => {
               const client = clientById.get(clientId);
               return (
@@ -464,13 +462,13 @@ function DayWorkspace({
       </div>
 
       <div>
-        <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
-          Going live
-        </p>
+        <h2 className="border-b-2 border-[var(--ink)] pb-2 font-display text-lg font-bold uppercase tracking-wide">
+          Going Live
+        </h2>
         {itemsForDay.length === 0 ? (
-          <p className="mt-2 text-sm text-[var(--ink-soft)]">Nothing scheduled to post this day.</p>
+          <p className="mt-3 text-sm text-[var(--ink-soft)]">Nothing scheduled to post this day.</p>
         ) : (
-          <div className="mt-2 space-y-4">
+          <div className="mt-3 space-y-4">
             {[...itemsByClient.entries()].map(([clientId, clientItems]) => {
               const client = clientById.get(clientId);
               return (
