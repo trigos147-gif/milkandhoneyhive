@@ -15,7 +15,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Printer, Trash2 } from "lucide-react";
 import {
   deleteTask,
   openTaskAsContent,
@@ -24,6 +24,7 @@ import {
   toggleTaskChecked,
 } from "../clients/[id]/actions";
 import ContentDrawer from "../clients/[id]/ContentDrawer";
+import DayPrintSheet from "@/components/DayPrintSheet";
 import { PHASE_LABELS } from "@/lib/types";
 import type { Client, ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
 
@@ -98,10 +99,6 @@ export default function GlobalCalendar({
     setAnchor(t);
     setSelectedDay(t);
   }
-  function startMyDay() {
-    goToday();
-    setView("day");
-  }
 
   const headerLabel =
     view === "month"
@@ -139,10 +136,10 @@ export default function GlobalCalendar({
             ))}
           </div>
           <button
-            onClick={startMyDay}
+            onClick={() => window.print()}
             className="flex items-center gap-1.5 rounded-md bg-[var(--gold)] px-3 py-1.5 text-xs font-medium text-[#1A1A1A] hover:opacity-90"
           >
-            <Sparkles size={12} /> Start my day
+            <Printer size={12} /> Print day
           </button>
         </div>
         <p className="text-xs text-[var(--ink-soft)]">
@@ -247,6 +244,14 @@ export default function GlobalCalendar({
           }}
         />
       )}
+
+      <DayPrintSheet
+        date={selectedDay ?? anchor}
+        scopeLabel="All Clients"
+        tasksForDay={tasksForDay}
+        itemsForDay={itemsForDay}
+        clientById={clientById}
+      />
     </div>
   );
 }

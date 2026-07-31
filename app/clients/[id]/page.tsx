@@ -86,7 +86,7 @@ export default async function ClientDetailPage({
         <ClientTabs
           board={<Board clientId={id} items={items} pillars={pillars} tasks={tasks} />}
           calendar={
-            <ClientCalendar clientId={id} items={items} tasks={tasks} pillars={pillars} />
+            <ClientCalendar clientId={id} clientName={client.name} items={items} tasks={tasks} pillars={pillars} />
           }
           media={<ClientMedia clientId={id} files={mediaFiles} />}
           contract={

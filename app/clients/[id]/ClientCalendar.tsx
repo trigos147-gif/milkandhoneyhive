@@ -15,7 +15,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Plus, Printer, Trash2, X } from "lucide-react";
 import {
   createTask,
   deleteTask,
@@ -25,6 +25,7 @@ import {
   toggleTaskChecked,
 } from "./actions";
 import ContentDrawer from "./ContentDrawer";
+import DayPrintSheet from "@/components/DayPrintSheet";
 import { PHASE_STYLE } from "./Board";
 import { PHASE_LABELS } from "@/lib/types";
 import type { ContentItem, ContentPillar, Task } from "@/lib/types";
@@ -52,11 +53,13 @@ function dateKey(d: Date) {
 
 export default function ClientCalendar({
   clientId,
+  clientName,
   items,
   tasks,
   pillars,
 }: {
   clientId: string;
+  clientName: string;
   items: ContentItem[];
   tasks: Task[];
   pillars: ContentPillar[];
@@ -107,10 +110,17 @@ export default function ClientCalendar({
     setAnchor(t);
     setSelectedDay(t);
   }
-  function startMyDay() {
-    goToday();
-    setView("day");
-  }
+
+  const printDate = selectedDay ?? anchor;
+  const printDateKey = dateKey(printDate);
+  const printTasks = useMemo(
+    () => tasks.filter((t) => t.due_date === printDateKey),
+    [tasks, printDateKey]
+  );
+  const printItems = useMemo(
+    () => items.filter((i) => i.scheduled_date === printDateKey),
+    [items, printDateKey]
+  );
 
   const headerLabel =
     view === "month"
@@ -144,10 +154,10 @@ export default function ClientCalendar({
             ))}
           </div>
           <button
-            onClick={startMyDay}
+            onClick={() => window.print()}
             className="flex items-center gap-1.5 rounded-md bg-[var(--gold)] px-3 py-1.5 text-xs font-medium text-[#1A1A1A] hover:opacity-90"
           >
-            <Sparkles size={12} /> Start my day
+            <Printer size={12} /> Print day
           </button>
         </div>
         <p className="text-xs text-[var(--ink-soft)]">
@@ -251,6 +261,13 @@ export default function ClientCalendar({
           }}
         />
       )}
+
+      <DayPrintSheet
+        date={printDate}
+        scopeLabel={clientName}
+        tasksForDay={printTasks}
+        itemsForDay={printItems}
+      />
     </div>
   );
 }

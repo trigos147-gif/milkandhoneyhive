@@ -34,3 +34,19 @@ body {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   letter-spacing: 0.04em;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #day-print-sheet,
+  #day-print-sheet * {
+    visibility: visible;
+  }
+  #day-print-sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
