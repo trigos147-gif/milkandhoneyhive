@@ -45,6 +45,11 @@ const TASK_TYPE_COLOR: Record<string, string> = {
   Carousels: "var(--sage)",
   Carousel: "var(--sage)",
   Videos: "var(--rust)",
+  research: "var(--teal)",
+  ideation: "var(--sage)",
+  writing: "var(--gold)",
+  filming: "var(--rust)",
+  designing: "var(--rust)",
 };
 
 function dateKey(d: Date) {

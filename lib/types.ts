@@ -1,5 +1,13 @@
 export type ContentPhase = "idea" | "in_progress" | "pending" | "approved" | "closed";
 
+export type ProductionStage =
+  | "research"
+  | "ideation"
+  | "writing"
+  | "filming"
+  | "designing"
+  | "scheduled";
+
 export type ClientStatus = "lead" | "onboarding" | "active" | "paused" | "archived";
 
 export type BillingType = "retainer" | "per_deliverable" | "one_time" | "as_needed";
@@ -13,6 +21,7 @@ export interface Workspace {
   name: string;
   plan: string;
   created_at: string;
+  batch_schedule: Record<string, number>;
 }
 
 export interface WorkspaceMember {
@@ -63,6 +72,7 @@ export interface ContentItem {
   format: string;
   pillar_id: string | null;
   phase: ContentPhase;
+  production_stage: ProductionStage;
   scheduled_date: string | null;
   scheduled_time: string | null;
   platforms: string[];
@@ -216,3 +226,72 @@ export const PHASE_ORDER: ContentPhase[] = [
   "approved",
   "closed",
 ];
+
+export const PRODUCTION_STAGE_LABELS: Record<ProductionStage, string> = {
+  research: "Research",
+  ideation: "Ideation / Planning",
+  writing: "Writing",
+  filming: "Filming & Editing",
+  designing: "Designing & Editing",
+  scheduled: "Scheduled",
+};
+
+export const PRODUCTION_STAGE_SHORT_LABELS: Record<ProductionStage, string> = {
+  research: "Research",
+  ideation: "Ideation",
+  writing: "Writing",
+  filming: "Filming",
+  designing: "Designing",
+  scheduled: "Scheduled",
+};
+
+export const PRODUCTION_STAGE_COLORS: Record<ProductionStage, string> = {
+  research: "var(--teal)",
+  ideation: "var(--sage)",
+  writing: "var(--gold)",
+  filming: "var(--rust)",
+  designing: "var(--rust)",
+  scheduled: "var(--plum)",
+};
+
+// Formats that go down the "filming" branch vs. the "designing" branch
+// after Writing. Everything else defaults to designing.
+const FILMING_FORMATS = new Set(["Reel", "Video"]);
+
+export function isFilmedFormat(formatValue: string | null | undefined): boolean {
+  return !!formatValue && FILMING_FORMATS.has(formatValue);
+}
+
+// The full stage pipeline for a given content format — used to build the
+// starting-stage picker and to figure out "what's next" after a stage.
+export function stagePipelineForFormat(formatValue: string | null | undefined): ProductionStage[] {
+  const branch: ProductionStage = isFilmedFormat(formatValue) ? "filming" : "designing";
+  return ["research", "ideation", "writing", branch, "scheduled"];
+}
+
+export function nextProductionStage(
+  current: ProductionStage,
+  formatValue: string | null | undefined
+): ProductionStage | null {
+  const pipeline = stagePipelineForFormat(formatValue);
+  const idx = pipeline.indexOf(current);
+  if (idx === -1 || idx === pipeline.length - 1) return null;
+  return pipeline[idx + 1];
+}
+
+export const DEFAULT_BATCH_SCHEDULE: Record<ProductionStage, number> = {
+  research: 1,
+  ideation: 2,
+  writing: 3,
+  filming: 4,
+  designing: 4,
+  scheduled: 5,
+};
+
+export const WEEKDAY_LABELS: Record<number, string> = {
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thursday",
+  5: "Friday",
+};

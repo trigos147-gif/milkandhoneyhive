@@ -29,7 +29,8 @@ import {
   updateContentItem,
 } from "./actions";
 import { createClient } from "@/lib/supabase-browser";
-import type { ContentFile, ContentItem, ContentPillar, Task } from "@/lib/types";
+import type { ContentFile, ContentItem, ContentPillar, ProductionStage, Task } from "@/lib/types";
+import { PRODUCTION_STAGE_LABELS, stagePipelineForFormat } from "@/lib/types";
 
 const FORMATS = ["Post", "Reel", "Story", "Carousel", "Video"];
 const PLATFORMS = ["Instagram", "TikTok", "Facebook", "LinkedIn", "Pinterest", "YouTube", "X"];
@@ -51,6 +52,9 @@ export default function ContentDrawer({
 
   const [title, setTitle] = useState(item.title);
   const [format, setFormat] = useState(item.format || "Post");
+  const [productionStage, setProductionStage] = useState<ProductionStage>(
+    item.production_stage ?? "research"
+  );
   const [pillarId, setPillarId] = useState(item.pillar_id ?? "");
   const [platforms, setPlatforms] = useState<string[]>(item.platforms ?? []);
   const [scheduledDate, setScheduledDate] = useState(item.scheduled_date ?? "");
@@ -76,6 +80,7 @@ export default function ContentDrawer({
   const dirty =
     title !== item.title ||
     format !== (item.format || "Post") ||
+    productionStage !== (item.production_stage ?? "research") ||
     pillarId !== (item.pillar_id ?? "") ||
     JSON.stringify(platforms) !== JSON.stringify(item.platforms ?? []) ||
     scheduledDate !== (item.scheduled_date ?? "") ||
@@ -94,6 +99,7 @@ export default function ContentDrawer({
     await updateContentItem(clientId, item.id, {
       title: title.trim(),
       format,
+      productionStage,
       pillarId: pillarId || null,
       platforms,
       scheduledDate: scheduledDate || null,
@@ -347,7 +353,17 @@ export default function ContentDrawer({
                   </label>
                   <select
                     value={format}
-                    onChange={(e) => setFormat(e.target.value)}
+                    onChange={(e) => {
+                      const newFormat = e.target.value;
+                      setFormat(newFormat);
+                      // Keep the stage picker's branch (filming vs. designing)
+                      // consistent with whatever format is now selected.
+                      const newPipeline = stagePipelineForFormat(newFormat);
+                      if (!newPipeline.includes(productionStage)) {
+                        const branch = newPipeline[3];
+                        setProductionStage(branch);
+                      }
+                    }}
                     className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
                   >
                     {FORMATS.map((f) => (
@@ -374,6 +390,26 @@ export default function ContentDrawer({
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
+                  Production stage
+                </label>
+                <select
+                  value={productionStage}
+                  onChange={(e) => setProductionStage(e.target.value as ProductionStage)}
+                  className="mt-1 w-full rounded-lg border border-[var(--ink)]/10 bg-[var(--paper)] p-2 text-sm outline-none"
+                >
+                  {stagePipelineForFormat(format).map((stage) => (
+                    <option key={stage} value={stage}>
+                      {PRODUCTION_STAGE_LABELS[stage]}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-[var(--ink-soft)]">
+                  Where this post starts (or currently sits) in the batching pipeline.
+                </p>
               </div>
 
               <div>

@@ -6,7 +6,12 @@ import { Plus, Calendar, Tag } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { createContentItem, updateContentPhase } from "./actions";
 import ContentDrawer from "./ContentDrawer";
-import { PHASE_LABELS, PHASE_ORDER } from "@/lib/types";
+import {
+  PHASE_LABELS,
+  PHASE_ORDER,
+  PRODUCTION_STAGE_COLORS,
+  PRODUCTION_STAGE_SHORT_LABELS,
+} from "@/lib/types";
 import type { ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
 
 export const PHASE_STYLE: Record<ContentPhase, { bg: string; text: string }> = {
@@ -103,6 +108,14 @@ export default function Board({
                     <p className="text-sm font-medium leading-snug">{item.title}</p>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--ink-soft)]">
+                      {item.production_stage && item.production_stage !== "scheduled" && (
+                        <span
+                          className="flex items-center gap-1 rounded-full px-1.5 py-0.5 font-medium text-white"
+                          style={{ backgroundColor: PRODUCTION_STAGE_COLORS[item.production_stage] }}
+                        >
+                          {PRODUCTION_STAGE_SHORT_LABELS[item.production_stage]}
+                        </span>
+                      )}
                       {pillar && (
                         <span className="flex items-center gap-1 rounded-full bg-black/5 px-1.5 py-0.5">
                           <span

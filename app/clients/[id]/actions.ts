@@ -3,7 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentWorkspace } from "@/lib/queries";
-import type { BillingType, ContentPhase, DeliverableFrequency } from "@/lib/types";
+import type { BillingType, ContentPhase, DeliverableFrequency, ProductionStage } from "@/lib/types";
+import { nextProductionStage } from "@/lib/types";
+
+const STAGE_TASK_TYPES = new Set([
+  "research",
+  "ideation",
+  "writing",
+  "filming",
+  "designing",
+]);
 
 export async function createContentItem(clientId: string, phase: ContentPhase) {
   const workspace = await getCurrentWorkspace();
@@ -318,6 +327,12 @@ export async function openTaskAsContent(clientId: string, taskId: string) {
 
 export async function toggleTaskChecked(clientId: string, taskId: string, checked: boolean) {
   const supabase = await createClient();
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("id, task_type, content_item_id")
+    .eq("id", taskId)
+    .maybeSingle();
+
   await supabase
     .from("tasks")
     .update({
@@ -327,8 +342,34 @@ export async function toggleTaskChecked(clientId: string, taskId: string, checke
     })
     .eq("id", taskId);
 
+  // If this was a batch stage task (research/writing/filming/etc.) being
+  // checked off, auto-advance the linked post to the next stage.
+  if (
+    checked &&
+    task?.content_item_id &&
+    task.task_type &&
+    STAGE_TASK_TYPES.has(task.task_type)
+  ) {
+    const { data: item } = await supabase
+      .from("content_items")
+      .select("id, format, production_stage")
+      .eq("id", task.content_item_id)
+      .maybeSingle();
+
+    if (item && item.production_stage === task.task_type) {
+      const next = nextProductionStage(item.production_stage as ProductionStage, item.format);
+      if (next) {
+        await supabase
+          .from("content_items")
+          .update({ production_stage: next, updated_at: new Date().toISOString() })
+          .eq("id", item.id);
+      }
+    }
+  }
+
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/batching");
 }
 
 export async function deleteTask(clientId: string, taskId: string) {
@@ -375,6 +416,7 @@ export async function updateContentItem(
     platforms?: string[];
     caption?: string | null;
     hashtags?: string | null;
+    productionStage?: ProductionStage;
   }
 ) {
   const supabase = await createClient();
@@ -387,6 +429,7 @@ export async function updateContentItem(
   if (data.platforms !== undefined) update.platforms = data.platforms;
   if (data.caption !== undefined) update.caption = data.caption;
   if (data.hashtags !== undefined) update.hashtags = data.hashtags;
+  if (data.productionStage !== undefined) update.production_stage = data.productionStage;
 
   await supabase.from("content_items").update(update).eq("id", itemId);
   revalidatePath(`/clients/${clientId}`);
