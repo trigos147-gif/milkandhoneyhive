@@ -305,10 +305,15 @@ export async function toggleTaskChecked(clientId: string, taskId: string, checke
   const supabase = await createClient();
   await supabase
     .from("tasks")
-    .update({ checked_off: checked, updated_at: new Date().toISOString() })
+    .update({
+      checked_off: checked,
+      checked_off_at: checked ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", taskId);
 
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/dashboard");
 }
 
 export async function deleteTask(clientId: string, taskId: string) {

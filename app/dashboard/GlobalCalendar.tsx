@@ -555,6 +555,11 @@ function TaskRow({
         >
           <span className={task.checked_off ? "text-[var(--ink-soft)] line-through" : ""}>{task.title}</span>
           {task.task_type && <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>}
+          {task.checked_off && task.checked_off_at && (
+            <span className="text-[10px] text-[var(--ink-soft)]">
+              · ✓ {format(new Date(task.checked_off_at), "MMM d, h:mm a")}
+            </span>
+          )}
           {opening && <Loader2 size={11} className="animate-spin text-[var(--ink-soft)]" />}
         </button>
       </div>

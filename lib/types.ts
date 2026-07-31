@@ -94,6 +94,7 @@ export interface Task {
   phase: ContentPhase;
   due_date: string | null;
   checked_off: boolean;
+  checked_off_at: string | null;
   content_item_id: string | null;
   created_at: string;
   updated_at: string;

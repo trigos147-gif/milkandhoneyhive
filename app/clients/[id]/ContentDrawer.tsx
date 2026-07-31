@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { format as formatDate } from "date-fns";
 import {
   Calendar,
   FileImage,
@@ -442,6 +443,11 @@ export default function ContentDrawer({
                         <span className={t.checked_off ? "text-[var(--ink-soft)] line-through" : ""}>
                           {t.title}
                         </span>
+                        {t.checked_off && t.checked_off_at && (
+                          <span className="text-[10px] text-[var(--ink-soft)]">
+                            · ✓ {formatDate(new Date(t.checked_off_at), "MMM d, h:mm a")}
+                          </span>
+                        )}
                       </label>
                       <button
                         onClick={async () => {
