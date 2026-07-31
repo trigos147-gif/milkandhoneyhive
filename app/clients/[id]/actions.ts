@@ -36,6 +36,21 @@ export async function updateContentPhase(
   revalidatePath("/");
 }
 
+export async function toggleContentPosted(clientId: string, itemId: string, checked: boolean) {
+  const supabase = await createClient();
+  await supabase
+    .from("content_items")
+    .update({
+      checked_off: checked,
+      checked_off_at: checked ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", itemId);
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/dashboard");
+}
+
 export async function updateContentTitle(
   clientId: string,
   itemId: string,

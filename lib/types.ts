@@ -71,6 +71,7 @@ export interface ContentItem {
   notes: string | null;
   asset_url: string | null;
   checked_off: boolean;
+  checked_off_at: string | null;
   created_at: string;
   updated_at: string;
 }

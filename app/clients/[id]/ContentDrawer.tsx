@@ -24,6 +24,7 @@ import {
   getContentFileUrl,
   getContentItemFiles,
   removeContentFile,
+  toggleContentPosted,
   toggleTaskChecked,
   updateContentItem,
 } from "./actions";
@@ -56,6 +57,8 @@ export default function ContentDrawer({
   const [scheduledTime, setScheduledTime] = useState(item.scheduled_time ?? "");
   const [caption, setCaption] = useState(item.caption ?? "");
   const [hashtags, setHashtags] = useState(item.hashtags ?? "");
+  const [posted, setPosted] = useState(item.checked_off);
+  const [postedAt, setPostedAt] = useState(item.checked_off_at);
 
   const [files, setFiles] = useState<ContentFile[]>([]);
   const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
@@ -179,6 +182,24 @@ export default function ContentDrawer({
             className="flex-1 bg-transparent font-display text-xl font-medium outline-none"
           />
           <div className="ml-3 flex items-center gap-3">
+            <label
+              className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-[var(--ink-soft)]"
+              title="Mark as posted"
+            >
+              <input
+                type="checkbox"
+                checked={posted}
+                onChange={async (e) => {
+                  const checked = e.target.checked;
+                  setPosted(checked);
+                  setPostedAt(checked ? new Date().toISOString() : null);
+                  await toggleContentPosted(clientId, item.id, checked);
+                  refresh();
+                }}
+                className="h-4 w-4 accent-[var(--sage)]"
+              />
+              {posted && postedAt ? `Posted ${formatDate(new Date(postedAt), "MMM d, h:mm a")}` : "Posted"}
+            </label>
             <button
               onClick={async () => {
                 if (!confirm(`Delete "${item.title}"? This can't be undone.`)) return;

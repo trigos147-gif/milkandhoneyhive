@@ -16,7 +16,13 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2, Sparkles, Trash2 } from "lucide-react";
-import { deleteTask, openTaskAsContent, rescheduleTask, toggleTaskChecked } from "../clients/[id]/actions";
+import {
+  deleteTask,
+  openTaskAsContent,
+  rescheduleTask,
+  toggleContentPosted,
+  toggleTaskChecked,
+} from "../clients/[id]/actions";
 import ContentDrawer from "../clients/[id]/ContentDrawer";
 import { PHASE_LABELS } from "@/lib/types";
 import type { Client, ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
@@ -267,7 +273,7 @@ function Chip({
       }}
       className={`block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] ${
         clickable ? "cursor-pointer hover:underline" : "cursor-default"
-      }`}
+      } ${entry.data.checked_off ? "line-through opacity-50" : ""}`}
       style={{ backgroundColor: `${client?.color ?? "#999"}22`, color: client?.color ?? "#666" }}
       title={`${client?.name ?? "Unknown"} — ${label}`}
     >
@@ -496,17 +502,43 @@ function DayWorkspace({
                   </div>
                   <div className="space-y-2">
                     {clientItems.map((item) => (
-                      <button
+                      <div
                         key={item.id}
-                        onClick={() => onOpenItem(item.id)}
-                        className="flex w-full items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2 text-left hover:bg-black/[0.015]"
+                        className="flex w-full items-center justify-between gap-2 rounded-lg border border-[var(--ink)]/8 px-3 py-2"
                       >
-                        <span className="text-sm">{item.title}</span>
-                        <span className="text-xs text-[var(--ink-soft)]">
-                          {PHASE_LABELS[item.phase as ContentPhase] ?? ""}
-                          {item.scheduled_time ? ` · ${item.scheduled_time}` : ""}
-                        </span>
-                      </button>
+                        <label
+                          className="flex shrink-0 items-center"
+                          title="Mark as posted"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={item.checked_off}
+                            onChange={async (e) => {
+                              await toggleContentPosted(item.client_id, item.id, e.target.checked);
+                              onChange();
+                            }}
+                            className="h-4 w-4 accent-[var(--sage)]"
+                          />
+                        </label>
+                        <button
+                          onClick={() => onOpenItem(item.id)}
+                          className="flex flex-1 items-center justify-between gap-2 text-left hover:opacity-80"
+                        >
+                          <span className={`text-sm ${item.checked_off ? "text-[var(--ink-soft)] line-through" : ""}`}>
+                            {item.title}
+                          </span>
+                          <span className="flex items-center gap-2 text-xs text-[var(--ink-soft)]">
+                            {item.checked_off && item.checked_off_at && (
+                              <span className="text-[10px]">
+                                ✓ Posted {format(new Date(item.checked_off_at), "MMM d, h:mm a")}
+                              </span>
+                            )}
+                            {PHASE_LABELS[item.phase as ContentPhase] ?? ""}
+                            {item.scheduled_time ? ` · ${item.scheduled_time}` : ""}
+                          </span>
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
