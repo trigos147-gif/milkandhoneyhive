@@ -48,5 +48,11 @@ body {
     top: 0;
     left: 0;
     width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #day-print-sheet * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
