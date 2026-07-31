@@ -15,8 +15,8 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Sparkles, Trash2 } from "lucide-react";
-import { deleteTask, rescheduleTask, toggleTaskChecked } from "../clients/[id]/actions";
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { deleteTask, openTaskAsContent, rescheduleTask, toggleTaskChecked } from "../clients/[id]/actions";
 import ContentDrawer from "../clients/[id]/ContentDrawer";
 import { PHASE_LABELS } from "@/lib/types";
 import type { Client, ContentItem, ContentPhase, ContentPillar, Task } from "@/lib/types";
@@ -49,9 +49,17 @@ export default function GlobalCalendar({
   const [anchor, setAnchor] = useState(new Date(new Date().toDateString()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [taskOpenedItem, setTaskOpenedItem] = useState<ContentItem | null>(null);
 
   const clientById = useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
-  const openItem = openItemId ? items.find((i) => i.id === openItemId) ?? null : null;
+  const openItem =
+    (openItemId ? items.find((i) => i.id === openItemId) ?? null : null) ?? taskOpenedItem;
+
+  async function handleOpenTask(task: Task) {
+    const contentItem = await openTaskAsContent(task.client_id, task.id);
+    if (contentItem) setTaskOpenedItem(contentItem as ContentItem);
+    router.refresh();
+  }
 
   const entriesByDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
@@ -214,6 +222,7 @@ export default function GlobalCalendar({
               clientById={clientById}
               onChange={() => router.refresh()}
               onOpenItem={setOpenItemId}
+              onOpenTask={handleOpenTask}
             />
           </div>
         )}
@@ -227,6 +236,7 @@ export default function GlobalCalendar({
           subtasks={tasks.filter((t) => t.content_item_id === openItem.id)}
           onClose={() => {
             setOpenItemId(null);
+            setTaskOpenedItem(null);
             router.refresh();
           }}
         />
@@ -391,12 +401,14 @@ function DayWorkspace({
   clientById,
   onChange,
   onOpenItem,
+  onOpenTask,
 }: {
   tasksForDay: Task[];
   itemsForDay: ContentItem[];
   clientById: Map<string, Client>;
   onChange: () => void;
   onOpenItem: (id: string) => void;
+  onOpenTask: (task: Task) => Promise<void>;
 }) {
   const doneCount = tasksForDay.filter((t) => t.checked_off).length;
 
@@ -451,7 +463,7 @@ function DayWorkspace({
                   </div>
                   <div className="space-y-2">
                     {clientTasks.map((task) => (
-                      <TaskRow key={task.id} task={task} onChange={onChange} />
+                      <TaskRow key={task.id} task={task} onChange={onChange} onOpenTask={onOpenTask} />
                     ))}
                   </div>
                 </div>
@@ -507,24 +519,45 @@ function DayWorkspace({
   );
 }
 
-function TaskRow({ task, onChange }: { task: Task; onChange: () => void }) {
+function TaskRow({
+  task,
+  onChange,
+  onOpenTask,
+}: {
+  task: Task;
+  onChange: () => void;
+  onOpenTask: (task: Task) => Promise<void>;
+}) {
+  const [opening, setOpening] = useState(false);
+
   return (
     <div className="flex items-center justify-between rounded-lg border border-[var(--ink)]/8 px-3 py-2">
-      <label className="flex flex-1 items-center gap-2">
+      <div className="flex flex-1 items-center gap-2">
         <input
           type="checkbox"
           checked={task.checked_off}
+          onClick={(e) => e.stopPropagation()}
           onChange={async (e) => {
             await toggleTaskChecked(task.client_id, task.id, e.target.checked);
             onChange();
           }}
-          className="h-4 w-4 accent-[var(--teal)]"
+          className="h-4 w-4 shrink-0 accent-[var(--teal)]"
         />
-        <span className={`text-sm ${task.checked_off ? "text-[var(--ink-soft)] line-through" : ""}`}>
-          {task.title}
-        </span>
-        {task.task_type && <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>}
-      </label>
+        <button
+          type="button"
+          disabled={opening}
+          onClick={async () => {
+            setOpening(true);
+            await onOpenTask(task);
+            setOpening(false);
+          }}
+          className="flex flex-1 items-center gap-1.5 text-left text-sm hover:underline disabled:opacity-60"
+        >
+          <span className={task.checked_off ? "text-[var(--ink-soft)] line-through" : ""}>{task.title}</span>
+          {task.task_type && <span className="text-xs text-[var(--ink-soft)]">· {task.task_type}</span>}
+          {opening && <Loader2 size={11} className="animate-spin text-[var(--ink-soft)]" />}
+        </button>
+      </div>
       <div className="flex items-center gap-2">
         <button
           onClick={async () => {

@@ -235,6 +235,72 @@ export async function createTask(
   revalidatePath(`/clients/${clientId}`);
 }
 
+const TASK_TYPE_TO_FORMAT: Record<string, string> = {
+  Reel: "Reel",
+  Reels: "Reel",
+  Post: "Post",
+  Posts: "Post",
+  Story: "Story",
+  Stories: "Story",
+  Carousel: "Carousel",
+  Carousels: "Carousel",
+  Video: "Video",
+  Videos: "Video",
+};
+
+// Called when a To Do task (usually auto-scheduled from a contract deliverable) is
+// clicked. If it's already tied to a content item, hand that back. Otherwise spin up
+// a new content item on the fly — pre-filled from the task — and link the two so
+// future clicks (and the Board/Media tabs) land on the same piece of content.
+export async function openTaskAsContent(clientId: string, taskId: string) {
+  const workspace = await getCurrentWorkspace();
+  if (!workspace) return null;
+
+  const supabase = await createClient();
+
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("id", taskId)
+    .single();
+
+  if (!task) return null;
+
+  if (task.content_item_id) {
+    const { data: existing } = await supabase
+      .from("content_items")
+      .select("*")
+      .eq("id", task.content_item_id)
+      .single();
+    if (existing) return existing;
+  }
+
+  const format = (task.task_type && TASK_TYPE_TO_FORMAT[task.task_type]) || "Post";
+
+  const { data: newItem, error } = await supabase
+    .from("content_items")
+    .insert({
+      workspace_id: workspace.id,
+      client_id: clientId,
+      title: task.title,
+      format,
+      phase: "idea",
+      scheduled_date: task.due_date,
+    })
+    .select()
+    .single();
+
+  if (error || !newItem) return null;
+
+  await supabase.from("tasks").update({ content_item_id: newItem.id }).eq("id", taskId);
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/planning");
+
+  return newItem;
+}
+
 export async function toggleTaskChecked(clientId: string, taskId: string, checked: boolean) {
   const supabase = await createClient();
   await supabase
