@@ -1,7 +1,8 @@
-import Sidebar, { NAV } from "./Sidebar";
+import Sidebar from "./Sidebar";
 import AccountButton from "./AccountButton";
 import { getCurrentUser } from "@/lib/queries";
 import type { Client } from "@/lib/types";
+import { NAV } from "@/lib/nav";
 import { ChevronRight } from "lucide-react";
 
 /* eslint-disable @next/next/no-img-element */

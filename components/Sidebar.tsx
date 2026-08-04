@@ -3,19 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Hexagon, LayoutGrid, Users, Layers, CalendarDays, DollarSign, Hash, Menu, X } from "lucide-react";
 import SignOutButton from "./SignOutButton";
 import type { Client } from "@/lib/types";
-
-export const NAV = [
-  { href: "/", label: "The Hive", icon: Hexagon },
-  { href: "/dashboard", label: "Calendar", icon: LayoutGrid },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/batching", label: "Batching", icon: Layers },
-  { href: "/tags", label: "Tags", icon: Hash },
-  { href: "/planning", label: "Planning", icon: CalendarDays },
-  { href: "/payments", label: "Payments", icon: DollarSign },
-];
+import { NAV } from "@/lib/nav";
+import { Menu, X } from "lucide-react";
 
 const STATUS_DOT: Record<string, string> = {
   lead: "#B85C42",
