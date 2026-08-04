@@ -25,7 +25,7 @@ export default function ClientMedia({
 
   if (files.length === 0) {
     return (
-      <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-10 text-center">
+      <div className="rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-10 text-center">
         <FileImage size={28} className="mx-auto text-[var(--ink-soft)]" />
         <p className="mt-3 text-sm text-[var(--ink-soft)]">
           No media uploaded yet. Files attached to any post will show up here.

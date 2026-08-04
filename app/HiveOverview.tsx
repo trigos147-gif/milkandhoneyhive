@@ -31,7 +31,7 @@ function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)] ${className}`}
+      className={`rounded-2xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] ${className}`}
     >
       <div className="border-b border-[var(--ink)]/8 px-6 py-4">
         <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
@@ -67,7 +67,7 @@ export function StatTiles({
       {tiles.map((t) => (
         <div
           key={t.label}
-          className="rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)] px-5 py-4"
+          className="rounded-2xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] px-5 py-4"
         >
           <p className="font-display text-3xl font-medium">{t.value}</p>
           <p className="mt-1 text-xs text-[var(--ink-soft)]">{t.label}</p>

@@ -12,7 +12,7 @@ const STATUS_STYLE: Record<string, string> = {
 export default function ClientsTable({ clients }: { clients: Client[] }) {
   if (clients.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)] p-10 text-center">
+      <div className="mt-6 rounded-2xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-10 text-center">
         <p className="font-display text-lg">No clients yet</p>
         <p className="mt-1 text-sm text-[var(--ink-soft)]">
           Add your first client above to get started.
@@ -22,7 +22,7 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
   }
 
   return (
-    <div className="mt-6 overflow-x-auto rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)]">
+    <div className="mt-6 overflow-x-auto rounded-2xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)]">
       <table className="w-full min-w-[520px] text-sm">
         <thead>
           <tr className="border-b border-[var(--ink)]/8 text-left text-xs uppercase tracking-wide text-[var(--ink-soft)]">

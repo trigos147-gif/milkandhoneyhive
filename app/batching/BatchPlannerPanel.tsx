@@ -56,7 +56,7 @@ export default function BatchPlannerPanel({
   }
 
   return (
-    <div className="mb-6 rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
+    <div className="mb-6 rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-4">
       <div className="flex items-center gap-2">
         <Sparkles size={16} className="text-[var(--gold)]" />
         <p className="text-sm font-medium">Batch day schedule</p>

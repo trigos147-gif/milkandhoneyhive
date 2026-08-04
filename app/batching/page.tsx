@@ -33,7 +33,7 @@ export default async function BatchingPage() {
       </div>
 
       {openItems.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)] p-10 text-center">
+        <div className="mt-6 rounded-2xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-10 text-center">
           <p className="text-sm text-[var(--ink-soft)]">
             Nothing to batch yet — add content from a client&apos;s board first.
           </p>

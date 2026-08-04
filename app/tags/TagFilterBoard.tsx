@@ -72,7 +72,7 @@ export default function TagFilterBoard({
   return (
     <div>
       {/* Filter bar */}
-      <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
+      <div className="rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Filter by tag</p>
           <button
@@ -217,7 +217,7 @@ export default function TagFilterBoard({
       </div>
 
       {/* Results */}
-      <div className="mt-6 rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)]">
+      <div className="mt-6 rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between border-b border-[var(--ink)]/8 px-4 py-3">
           <p className="text-sm font-medium">
             {activeTagIds.length === 0 ? "All posts" : `${filteredItems.length} match${filteredItems.length === 1 ? "" : "es"}`}

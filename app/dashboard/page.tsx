@@ -42,7 +42,7 @@ export default async function DashboardPage() {
       </div>
 
       {clients.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)] p-10 text-center">
+        <div className="mt-6 rounded-2xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-10 text-center">
           <p className="font-display text-lg">No clients yet</p>
           <p className="mt-1 text-sm text-[var(--ink-soft)]">
             Add your first client to start seeing their content here.

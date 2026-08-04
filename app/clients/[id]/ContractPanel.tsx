@@ -130,7 +130,7 @@ export default function ContractPanel({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-5">
+    <div className="rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-5">
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
           Contract & deliverables

@@ -51,7 +51,7 @@ export default async function ClientLinkPage({
             (items ?? []).map((item) => (
               <div
                 key={item.id}
-                className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4"
+                className="rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-4"
               >
                 <p className="font-medium">{item.title}</p>
                 {item.caption && (

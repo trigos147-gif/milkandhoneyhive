@@ -43,7 +43,7 @@ export default async function PlanningPage() {
           {clients.map((client) => (
             <div
               key={client.id}
-              className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4"
+              className="rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-4"
             >
               <div className="mb-3 flex items-center gap-2">
                 <span

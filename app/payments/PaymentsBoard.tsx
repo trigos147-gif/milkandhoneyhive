@@ -148,7 +148,7 @@ export default function PaymentsBoard({
             return (
               <div
                 key={p.id}
-                className="flex items-center justify-between rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-3"
+                className="flex items-center justify-between rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-3"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -214,7 +214,7 @@ function SummaryCard({
   accent: string;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--ink)]/10 bg-[var(--paper-raised)] p-4">
+    <div className="rounded-xl border border-[var(--ink)]/6 bg-[var(--paper-raised)] shadow-[var(--shadow-card)] p-4">
       <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
         {label}
       </p>
