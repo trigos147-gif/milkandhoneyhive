@@ -22,8 +22,8 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
   }
 
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)]">
-      <table className="w-full text-sm">
+    <div className="mt-6 overflow-x-auto rounded-2xl border border-[var(--ink)]/8 bg-[var(--paper-raised)]">
+      <table className="w-full min-w-[520px] text-sm">
         <thead>
           <tr className="border-b border-[var(--ink)]/8 text-left text-xs uppercase tracking-wide text-[var(--ink-soft)]">
             <th className="px-6 py-3 font-medium">Client</th>

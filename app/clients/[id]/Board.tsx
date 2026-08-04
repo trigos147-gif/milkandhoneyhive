@@ -61,7 +61,7 @@ export default function Board({
   }
 
   return (
-    <div className="grid grid-cols-5 gap-3">
+    <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-5 lg:overflow-visible lg:px-0 lg:pb-0">
       {PHASE_ORDER.map((phase) => {
         const style = PHASE_STYLE[phase];
         const phaseItems = itemsFor(phase);
@@ -70,7 +70,7 @@ export default function Board({
         return (
           <div
             key={phase}
-            className={`min-w-0 rounded-xl border transition-colors ${
+            className={`min-w-[78vw] shrink-0 rounded-xl border transition-colors sm:min-w-[280px] lg:min-w-0 lg:shrink ${
               isOver
                 ? "border-[var(--ink)]/40 bg-black/[0.03]"
                 : "border-[var(--ink)]/10 bg-black/[0.015]"

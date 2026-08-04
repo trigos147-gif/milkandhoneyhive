@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       clients={clients}
       workspaceName={workspace?.name ?? "Client Flow"}
     >
-      <div className="-mx-8 -mt-8 flex items-center justify-between border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-4 py-3">
+      <div className="-mx-4 -mt-4 flex flex-wrap items-center justify-between gap-2 border-x border-b border-[var(--ink)]/12 bg-[var(--paper-raised)] px-4 py-3 lg:-mx-8 lg:-mt-8">
         <div>
           <p className="font-mono-data text-[10px] uppercase tracking-wide text-[var(--ink-soft)]">
             Overview

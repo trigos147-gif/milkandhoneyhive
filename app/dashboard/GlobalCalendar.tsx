@@ -116,8 +116,8 @@ export default function GlobalCalendar({
   const itemsForDay = items.filter((i) => i.scheduled_date === dayKey);
 
   return (
-    <div className="-mx-8 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] py-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ink)]/8 px-8 pb-4">
+    <div className="-mx-4 flex min-h-[calc(100vh-260px)] flex-col border-y border-[var(--ink)]/10 bg-[var(--paper-raised)] py-4 lg:-mx-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ink)]/8 px-4 pb-4 lg:px-8">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-0.5 rounded-md border border-[var(--ink)]/10 p-0.5">
             {(
@@ -153,7 +153,7 @@ export default function GlobalCalendar({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 px-8 pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-8">
         <div className="flex items-center gap-2">
           <button
             onClick={goPrev}
@@ -195,34 +195,40 @@ export default function GlobalCalendar({
 
       <div className="mt-4 flex-1">
         {view === "month" && (
-          <MonthGrid
-            anchor={anchor}
-            entriesByDate={entriesByDate}
-            clientById={clientById}
-            onSelectDay={(d) => {
-              setSelectedDay(d);
-              setAnchor(d);
-              setView("day");
-            }}
-            onOpenItem={setOpenItemId}
-          />
+          <div className="h-full overflow-x-auto px-4 lg:px-8">
+            <div className="h-full min-w-[640px]">
+              <MonthGrid
+                anchor={anchor}
+                entriesByDate={entriesByDate}
+                clientById={clientById}
+                onSelectDay={(d) => {
+                  setSelectedDay(d);
+                  setAnchor(d);
+                  setView("day");
+                }}
+                onOpenItem={setOpenItemId}
+              />
+            </div>
+          </div>
         )}
         {view === "week" && (
-          <div className="px-8">
-            <WeekGrid
-              anchor={anchor}
-              entriesByDate={entriesByDate}
-              clientById={clientById}
-              onSelectDay={(d) => {
-                setAnchor(d);
-                setView("day");
-              }}
-              onOpenItem={setOpenItemId}
-            />
+          <div className="h-full overflow-x-auto px-4 lg:px-8">
+            <div className="h-full min-w-[640px]">
+              <WeekGrid
+                anchor={anchor}
+                entriesByDate={entriesByDate}
+                clientById={clientById}
+                onSelectDay={(d) => {
+                  setAnchor(d);
+                  setView("day");
+                }}
+                onOpenItem={setOpenItemId}
+              />
+            </div>
           </div>
         )}
         {view === "day" && (
-          <div className="px-8">
+          <div className="px-4 lg:px-8">
             <DayWorkspace
               tasksForDay={tasksForDay}
               itemsForDay={itemsForDay}
