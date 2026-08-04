@@ -7,7 +7,7 @@ import { Hexagon, LayoutGrid, Users, Layers, CalendarDays, DollarSign, Hash, Men
 import SignOutButton from "./SignOutButton";
 import type { Client } from "@/lib/types";
 
-const NAV = [
+export const NAV = [
   { href: "/", label: "The Hive", icon: Hexagon },
   { href: "/dashboard", label: "Calendar", icon: LayoutGrid },
   { href: "/clients", label: "Clients", icon: Users },
